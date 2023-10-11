@@ -4,7 +4,7 @@
 # data "aws_route53_zone" "current" {
 #   for_each = {
 #     for name in flatten([
-#       for traffic in local.traffics : [
+#       for traffic in var.traffics : [
 #         for zone in try(var.route53.zones, []) : zone.name
 #       ] if traffic.listener.protocol == "https"
 #     ]) : name => {}
@@ -20,7 +20,7 @@
 
 #   for_each = {
 #     for name in flatten([
-#       for traffic in local.traffics : [
+#       for traffic in var.traffics : [
 #         for zone in try(var.route53.zones, []) : zone.name
 #       ] if traffic.listener.protocol == "https"
 #     ]) : name => {}
@@ -70,7 +70,7 @@
 #   name                     = var.name
 #   vpc                      = var.vpc
 #   layer7_to_layer4_mapping = local.layer7_to_layer4_mapping
-#   traffics                 = local.traffics
+#   traffics                 = var.traffics
 #   deployment_type          = var.service.deployment_type
 #   certificate_arn          = try(one(values(module.acm)).acm_certificate_arn, null)
 

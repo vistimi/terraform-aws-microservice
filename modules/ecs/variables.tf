@@ -33,16 +33,16 @@ variable "traffics" {
   type = list(object({
     listener = object({
       protocol         = string
-      port             = optional(number)
-      protocol_version = optional(string)
+      port             = number
+      protocol_version = string
     })
-    target = object({
+    target = optional(object({
       protocol          = string
       port              = number
-      protocol_version  = optional(string)
-      health_check_path = optional(string)
+      protocol_version  = string
+      health_check_path = string
       status_code       = optional(string)
-    })
+    }))
     base = optional(bool)
   }))
   nullable = false
@@ -68,12 +68,12 @@ variable "ecs" {
         memory          = number
 
         containers = list(object({
-          name        = string
-          base        = optional(bool)
-          cpu         = number
-          memory      = number
+          name               = string
+          base               = optional(bool)
+          cpu                = number
+          memory             = number
           memory_reservation = number
-          devices_idx = optional(list(number))
+          devices_idx        = optional(list(number))
           environments = optional(list(object({
             name  = string
             value = string

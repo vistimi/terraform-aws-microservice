@@ -30,36 +30,6 @@ locals {
   region_name = data.aws_region.current.name
   subnets     = data.aws_subnets.tier.ids
 
-  traffics = [for traffic in var.traffics : {
-    listener = merge(traffic.listener, {
-      port = coalesce(
-        traffic.listener.port,
-        traffic.listener.protocol == "http" ? 80 : null,
-        traffic.listener.protocol == "https" ? 443 : null,
-        traffic.listener.protocol == "grpc" ? 443 : null,
-      )
-      protocol_version = coalesce(
-        traffic.listener.protocol_version,
-        traffic.listener.protocol == "http" ? "http1" : null,
-        traffic.listener.protocol == "https" ? "http1" : null,
-        traffic.listener.protocol == "grpc" ? "http2" : null,
-      )
-    })
-    target = merge(traffic.target, {
-      protocol_version = coalesce(
-        traffic.target.protocol_version,
-        traffic.target.protocol == "http" ? "http1" : null,
-        traffic.target.protocol == "https" ? "http1" : null,
-        traffic.target.protocol == "grpc" ? "http2" : null,
-      )
-      health_check_path = coalesce(
-        traffic.target.health_check_path,
-        "/",
-      )
-    })
-    base = traffic.base
-  }]
-
   # icmp, icmpv6, tcp, udp, or all use the protocol number
   # https://www.iana.org/assignments/protocol-numbers/protocol-numbers.xhtml
   layer7_to_layer4_mapping = {

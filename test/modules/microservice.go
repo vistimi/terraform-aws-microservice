@@ -79,14 +79,14 @@ type LogTest struct {
 
 type TrafficPoint struct {
 	Port            *int
-	Protocol        string
+	Protocol        *string
 	ProtocolVersion *string
 	StatusCode      *string
 }
 
 type Traffic struct {
 	Listener TrafficPoint
-	Target   TrafficPoint
+	Target   *TrafficPoint
 	Base     *bool
 }
 
@@ -102,25 +102,28 @@ func SetupMicroservice(t *testing.T, microserviceInformation MicroserviceInforma
 	}
 
 	for _, traffic := range traffics {
-		target := map[string]any{
-			"protocol":          traffic.Target.Protocol,
-			"health_check_path": microserviceInformation.HealthCheckPath,
+		target := make(map[string]any)
+		if traffic.Target != nil {
+			target["health_check_path"] = microserviceInformation.HealthCheckPath
+			target = util.ObjNil(traffic.Target.Protocol, target, "protocol")
+			target = util.ObjNil(traffic.Target.Port, target, "port")
+			target = util.ObjNil(traffic.Target.ProtocolVersion, target, "protocol_version")
+			target = util.ObjNil(traffic.Target.StatusCode, target, "status_code")
 		}
-		target = util.ObjNil(traffic.Target.Port, target, "port")
-		target = util.ObjNil(traffic.Target.ProtocolVersion, target, "protocol_version")
-		target = util.ObjNil(traffic.Target.StatusCode, target, "status_code")
 
-		listener := map[string]any{
-			"protocol": traffic.Listener.Protocol,
-		}
+		listener := map[string]any{}
+		listener = util.ObjNil(traffic.Listener.Protocol, listener, "protocol")
 		listener = util.ObjNil(traffic.Listener.Port, listener, "port")
 		listener = util.ObjNil(traffic.Listener.ProtocolVersion, listener, "protocol_version")
 
-		trafficsMap = append(trafficsMap, map[string]any{
+		trafficMap := map[string]any{
 			"listener": listener,
-			"target":   target,
 			"base":     util.Value(traffic.Base),
-		})
+		}
+		if len(target) != 0 {
+			trafficMap["target"] = target
+		}
+		trafficsMap = append(trafficsMap, trafficMap)
 	}
 
 	registry := make(map[string]any)
@@ -161,12 +164,12 @@ func ValidateMicroservice(t *testing.T, name string, deployment DeploymentTest, 
 
 func ValidateRestEndpoints(t *testing.T, microservicePath string, deployment DeploymentTest, traffics []Traffic, name, modulePath string) {
 	terratestLogger.Log(t, "Validate Rest endpoints")
-	sleepBetweenRetries := 30 * time.Second
+	sleepBetweenRetries := 10 * time.Second
 	terratestLogger.Log(t, fmt.Sprintf("Sleeping %s...", sleepBetweenRetries))
 	time.Sleep(sleepBetweenRetries)
 
 	for _, traffic := range traffics {
-		if traffic.Listener.Protocol == "http" {
+		if *traffic.Listener.Protocol == "http" {
 			port := util.Value(traffic.Listener.Port, 80)
 			// test Load Balancer HTTP
 			elb := ExtractFromState(t, microservicePath, util.Format(".", modulePath, "ecs.elb"))
@@ -234,7 +237,7 @@ func ValidateRestEndpoints(t *testing.T, microservicePath string, deployment Dep
 				}
 			}
 
-		} else if traffic.Listener.Protocol == "https" {
+		} else if *traffic.Listener.Protocol == "https" {
 			// port := util.Value(traffic.Listener.Port, 443)
 			// TODO: add HTTPS
 		}
@@ -302,7 +305,7 @@ func TestRestEndpoints(t *testing.T, endpoints []EndpointTest) {
 
 func ValidateGrpcEndpoints(t *testing.T, microservicePath string, deployment DeploymentTest, traffics []Traffic, name, modulePath string) {
 	terratestLogger.Log(t, "Validate gRPC endpoints")
-	sleepBetweenRetries := 30 * time.Second
+	sleepBetweenRetries := 10 * time.Second
 	terratestLogger.Log(t, fmt.Sprintf("Sleeping %s...", sleepBetweenRetries))
 	time.Sleep(sleepBetweenRetries)
 

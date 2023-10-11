@@ -1,22 +1,42 @@
-# AWS microservice Terraform module
+# AWS microservice terraform module
 
-Terraform module which creates a microservice for the following specifications:
+Terraform module which creates a microservice that works for all EC2 instances. The applications can range from deploying general purpose applications, machine learning training. machine learning inference, high performance computing and more.
 
-- [ ] ECS
-  - [x] Fargate
-  - [ ] EC2
-    - [x] CPU
-    - [x] GPU
-    - [x] Inferentia
-    - [ ] Trainium
-    - [ ] Gaudi
-- [ ] EKS
-  - [ ] Fargate
-  - [ ] EC2
+The purpose is to unify under one confguration a general purpose deployment to reduce the technical debt on the infrastructure. It is a simple, safe and scalable way to deploy applications with containers.
+it is also a great alternative to Sagemaker, it will be 40% cheaper but will require some work on the infrastructure for deploying it.
+
+The configuration aims to support Kubernetes and have the same modules for other cloud providers.
+
+The microservice has the following specifications:
+
+- Load balancer
+  - HTTP
+  - HTTPS
+  - gRPC
+- Auto scaling
+- DNS with Route53
+- Environement file
+- Container orchestrators
+  - [ ] ECS
+    - [x] Fargate
+    - [ ] EC2
+      - [x] CPU
+      - [x] GPU
+      - [x] Inferentia
+      - [ ] Trainium
+      - [ ] Gaudi
+  - [ ] EKS
+    - [ ] Fargate
+    - [ ] EC2
+
+## Architecture
+
+![Architecture](https://github.com/vistimi/terraform-aws-microservice/blob/trunk/images/architecture.png?raw=true)
 
 ## Examples
 
-Go check the [tests](https://github.com/vistimi/terraform-aws-microservice/tree/trunk/test/microservice) to see how 
+Go check the [examples](https://github.com/vistimi/terraform-aws-microservice/tree/trunk/examples)
+Go check the [tests](https://github.com/vistimi/terraform-aws-microservice/tree/trunk/test/microservice)
 
 ## ECS vs EKS equivalent
 
@@ -47,7 +67,3 @@ It means that not every available zone has an instance available. Unfortunately 
 ## License
 
 See [LICENSE](https://github.com/vistimi/terraform-aws-microservice/tree/trunk/LICENSE) for full details.
-
-## Architecture
-
-![Architecture](images/architecture.png)

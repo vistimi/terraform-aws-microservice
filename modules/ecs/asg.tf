@@ -25,9 +25,9 @@ module "asg" {
 
   for_each = {
     for obj in flatten([for instance_type in var.ecs.service.ec2.instance_types : [for capacity in var.ecs.service.ec2.capacities : {
-      instance_regex = regex("^(?P<prefix>\\w+)\\.(?P<size_number>\\d*x*)(?P<size_name>\\w+)$",instance_type)
-      instance_type = instance_type
-      capacity      = capacity
+      instance_regex = regex("^(?P<prefix>\\w+)\\.(?P<size_number>\\d*x*)(?P<size_name>\\w+)$", instance_type)
+      instance_type  = instance_type
+      capacity       = capacity
       }
     ]]) : join("-", compact([var.name, substr(obj.capacity.type, 0, 2), "${obj.instance_regex.prefix}-${obj.instance_regex.size_number}${substr(obj.instance_regex.size_name, 0, 1)}"])) => { instance_type = obj.instance_type, capacity = obj.capacity }
   }
@@ -48,7 +48,7 @@ module "asg" {
   user_data_base64         = base64encode(local.user_data[each.value.capacity.type])
   port_mapping             = "dynamic"
   layer7_to_layer4_mapping = local.layer7_to_layer4_mapping
-  traffics                 = local.traffics
+  traffics                 = var.traffics
   target_group_arns        = module.elb.target_group.arns
   source_security_group_id = module.elb.security_group.id
 

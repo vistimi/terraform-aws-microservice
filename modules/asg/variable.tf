@@ -96,5 +96,20 @@ variable "layer7_to_layer4_mapping" {
 }
 
 variable "traffics" {
-  type = list(any)
+  type = list(object({
+    listener = object({
+      protocol         = string
+      port             = number
+      protocol_version = string
+    })
+    target = optional(object({
+      protocol          = string
+      port              = number
+      protocol_version  = string
+      health_check_path = string
+      status_code       = optional(string)
+    }))
+    base = optional(bool)
+  }))
+  nullable = false
 }

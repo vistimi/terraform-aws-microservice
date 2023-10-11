@@ -1,10 +1,10 @@
 variable "zone_name" {
-  description = "The name of the zone"
+  description = "The name of the hosted zone"
   type        = string
 }
 
 variable "record" {
-  description = "The name of the zone"
+  description = "The record configuration"
   type = object({
     subdomain_name = string
     extensions     = optional(list(string), [])

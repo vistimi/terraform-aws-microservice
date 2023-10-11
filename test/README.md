@@ -12,6 +12,11 @@ make aws-auth
 make prepare
 ```
 
+Then:
+```sh
+go test -p 1
+```
+
 If you want to test again without the cache result:
 ```sh
 make test-clear

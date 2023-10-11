@@ -39,14 +39,13 @@ var (
 		{
 			Listener: testAwsModule.TrafficPoint{
 				Port:     util.Ptr(443),
-				Protocol: "https",
+				Protocol: util.Ptr("https"),
 			},
-			Target: testAwsModule.TrafficPoint{
+			Target: util.Ptr(testAwsModule.TrafficPoint{
 				Port:            util.Ptr(50051),
-				Protocol:        "http",
 				ProtocolVersion: util.Ptr("grpc"),
 				StatusCode:      util.Ptr("0"),
-			},
+			}),
 		},
 	}
 

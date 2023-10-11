@@ -71,7 +71,7 @@ module "ecs" {
         service = {
           target_group_arn = element(module.elb.target_group.arns, 0) // one LB per target group
           container_name   = length(var.ecs.service.task.containers) == 1 ? "${var.name}-${var.ecs.service.task.containers[0].name}" : [for container in var.ecs.service.task.containers : "${var.name}-${container.name}" if container.base == true][0]
-          container_port   = element([for traffic in local.traffics : traffic.target.port if traffic.base == true || length(local.traffics) == 1], 0)
+          container_port   = element([for traffic in var.traffics : traffic.target.port if traffic.base == true || length(var.traffics) == 1], 0)
         }
       }
 
@@ -79,7 +79,7 @@ module "ecs" {
       subnet_ids = local.subnets
       security_group_rules = merge(
         {
-          for target in distinct([for traffic in local.traffics : {
+          for target in distinct([for traffic in var.traffics : {
             port     = traffic.target.port
             protocol = traffic.target.protocol
             }]) : join("-", ["elb", "ingress", target.protocol, target.port]) => {
@@ -239,7 +239,7 @@ module "ecs" {
           environment = container.environments,
 
           # https://docs.aws.amazon.com/AmazonECS/latest/APIReference/API_PortMapping.html
-          port_mappings = [for target in distinct([for traffic in local.traffics : {
+          port_mappings = [for target in distinct([for traffic in var.traffics : {
             port             = traffic.target.port
             protocol         = traffic.target.protocol
             protocol_version = traffic.target.protocol_version

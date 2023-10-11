@@ -40,19 +40,21 @@ variable "bucket_env" {
 }
 
 variable "traffics" {
+  description = "It contains the networking configuration. Only one element can be the base, the base is necessary only if there are more than one element, the target configuration matters only for the base. The default `protocol_version` is HTTP1."
+  
   type = list(object({
     listener = object({
       protocol         = string
       port             = optional(number)
       protocol_version = optional(string)
     })
-    target = object({
-      protocol          = string
+    target = optional(object({
+      protocol          = optional(string)
       port              = number
       protocol_version  = optional(string)
       health_check_path = optional(string)
       status_code       = optional(string)
-    })
+    }))
     base = optional(bool)
   }))
   nullable = false
@@ -83,11 +85,11 @@ variable "traffics" {
 
   # traffic targets
   validation {
-    condition     = alltrue([for traffic in var.traffics : contains(["http", "https", "tcp"], traffic.target.protocol)])
+    condition     = alltrue([for traffic in var.traffics : contains(["http", "https", "tcp"], traffic.target.protocol) if try(traffic.target.protocol != null, traffic.target != null)])
     error_message = "Target protocol must be one of [http, https, tcp]"
   }
   validation {
-    condition     = alltrue([for traffic in var.traffics : traffic.target.protocol_version != null ? contains(["http1", "http2", "grpc"], traffic.target.protocol_version) : true])
+    condition     = alltrue([for traffic in var.traffics : contains(["http1", "http2", "grpc"], traffic.target.protocol_version) if try(traffic.target.protocol_version != null, traffic.target != null)])
     error_message = "Target protocol version must be one of [http1, http2, grpc] or null"
   }
 }
@@ -103,12 +105,12 @@ variable "orchestrator" {
         maximum_percent = optional(number)
 
         containers = list(object({
-          name        = string
-          base        = optional(bool)
-          cpu         = optional(number)
-          memory      = optional(number)
+          name               = string
+          base               = optional(bool)
+          cpu                = optional(number)
+          memory             = optional(number)
           memory_reservation = optional(number, 50)
-          devices_idx = optional(list(number))
+          devices_idx        = optional(list(number))
           environments = optional(list(object({
             name  = string
             value = string

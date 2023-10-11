@@ -1,5 +1,45 @@
 locals {
   tags = merge(var.tags, { VpcId = "${var.vpc.id}" })
+
+  listeners = [for traffic in var.traffics : merge(traffic.listener, {
+    port = coalesce(
+      traffic.listener.port,
+      traffic.listener.protocol == "http" ? 80 : null,
+      traffic.listener.protocol == "https" ? 443 : null,
+      traffic.listener.protocol == "grpc" ? 443 : null,
+    )
+    protocol_version = coalesce(
+      traffic.listener.protocol_version,
+      traffic.listener.protocol == "http" ? "http1" : null,
+      traffic.listener.protocol == "https" ? "http1" : null,
+      traffic.listener.protocol == "grpc" ? "http2" : null,
+    )
+    })
+  ]
+
+  base_target = [for index, traffic in var.traffics : merge(traffic.target, {
+    protocol = coalesce(
+      traffic.target.protocol,
+      local.listeners[index].protocol,
+    )
+    protocol_version = coalesce(
+      traffic.target.protocol_version,
+      traffic.target.protocol == "http" ? "http1" : null,
+      traffic.target.protocol == "https" ? "http1" : null,
+      traffic.target.protocol == "grpc" ? "http2" : null,
+      local.listeners[index].protocol_version,
+    )
+    health_check_path = coalesce(
+      traffic.target.health_check_path,
+      "/",
+    )
+  }) if traffic.base == true || length(var.traffics) == 1][0]
+
+  traffics = [for index, traffic in var.traffics : {
+    listener = local.listeners[index]
+    target   = local.base_target
+    base     = traffic.base
+  }]
 }
 
 module "ecs" {
@@ -8,7 +48,7 @@ module "ecs" {
   name     = var.name
   vpc      = var.vpc
   route53  = var.route53
-  traffics = var.traffics
+  traffics = local.traffics
   bucket_env = var.bucket_env != null ? {
     name     = join("-", [var.name, "env"])
     file_key = var.bucket_env.file_key

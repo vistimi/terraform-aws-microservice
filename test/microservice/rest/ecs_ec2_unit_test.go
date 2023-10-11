@@ -38,32 +38,23 @@ var (
 		{
 			Listener: testAwsModule.TrafficPoint{
 				Port:     util.Ptr(80),
-				Protocol: "http",
+				Protocol: util.Ptr("http"),
 			},
-			Target: testAwsModule.TrafficPoint{
-				Port:     util.Ptr(80),
-				Protocol: "http",
-			},
+			Target: util.Ptr(testAwsModule.TrafficPoint{
+				Port: util.Ptr(80),
+			}),
 			Base: util.Ptr(true),
 		},
 		{
 			Listener: testAwsModule.TrafficPoint{
 				Port:     util.Ptr(81),
-				Protocol: "http",
-			},
-			Target: testAwsModule.TrafficPoint{
-				Port:     util.Ptr(80),
-				Protocol: "http",
+				Protocol: util.Ptr("http"),
 			},
 		},
 		{
 			Listener: testAwsModule.TrafficPoint{
 				Port:     util.Ptr(443),
-				Protocol: "https",
-			},
-			Target: testAwsModule.TrafficPoint{
-				Port:     util.Ptr(3000),
-				Protocol: "https",
+				Protocol: util.Ptr("https"),
 			},
 		},
 	}
