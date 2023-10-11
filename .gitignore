@@ -1,0 +1,10 @@
+*.env
+
+# terraform
+.terraform*
+*.tfstate*
+*tfvars
+*override*
+
+# ssh
+*.pem

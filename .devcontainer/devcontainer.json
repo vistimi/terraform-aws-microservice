@@ -1,0 +1,38 @@
+{
+	"name": "Alpine",
+	"build": {
+		"dockerfile": "../test/Dockerfile",
+		"args": {
+			"VARIANT": "mcr.microsoft.com/devcontainers/base:alpine-3.16",
+			"DOCKER_BUILDKIT": "0"
+		},
+		"target": "runner"
+	},
+	"runArgs": [
+		"--env-file",
+		".devcontainer/devcontainer.env"
+	],
+	"mounts": [
+		"source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind"
+	],
+	"onCreateCommand": "go install github.com/cweill/gotests/gotests@latest && go install github.com/fatih/gomodifytags@latest && go install github.com/josharian/impl@latest && go install github.com/haya14busa/goplay/cmd/goplay@latest && go install github.com/go-delve/delve/cmd/dlv@latest && go install honnef.co/go/tools/cmd/staticcheck@latest && go install golang.org/x/tools/gopls@latest && go install -v golang.org/x/tools/cmd/goimports@latest && go install github.com/rogpeppe/godef@latest",
+	"postStartCommand": "export $(grep -v '^#' .devcontainer/devcontainer.env | xargs) && make -f test/Makefile aws-auth && cd test && tflint --init && sudo go mod download",
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"yzhang.markdown-all-in-one",
+				"golang.go",
+				"shakram02.bash-beautify",
+				"shd101wyy.markdown-preview-enhanced",
+				"premparihar.gotestexplorer",
+				"hashicorp.terraform",
+				"bierner.markdown-emoji",
+				"ms-vscode.makefile-tools",
+				"ms-azuretools.vscode-docker",
+				"IronGeek.vscode-env",
+				"github.vscode-github-actions",
+				"redhat.vscode-yaml"
+			]
+		}
+	}
+}

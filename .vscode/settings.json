@@ -1,0 +1,11 @@
+{
+  "go.testTimeout": "60m",
+  "editor.tabSize": 4,
+  "files.associations": {
+    "*.hcl": "terraform",
+  },
+  "go.coverOnSave": false,
+  "go.coverOnSingleTest": false,
+  "go.coverOnSingleTestFile": false,
+  "terminal.integrated.scrollback": 20000
+}

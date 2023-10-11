@@ -1,0 +1,29 @@
+s3:
+  include:
+    names_regex:
+      - local
+      - test
+  exclude:
+    names_regex:
+      - public
+      - prod
+
+DynamoDB:
+  include:
+    names_regex:
+      - local
+      - test
+  exclude:
+    names_regex:
+      - public
+      - prod
+
+ECRRepository:
+  include:
+    names_regex:
+      - local
+  exclude:
+    names_regex:
+      - test
+      - public
+      - prod

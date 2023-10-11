@@ -1,0 +1,142 @@
+# name: Test
+
+# on:
+#     workflow_run:
+#         workflows: ["Docker registry"]
+#         types:
+#         - completed
+
+# env:
+#   ECR_PRIVACY: ${{ vars.CONTAINER_REGISTRY_PRIVACY }}
+#   IMAGE_TAG: latest
+#   ORGANIZATION_NAME: ${{ github.repository_owner }}
+#   BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
+#   ECR_REPOSITORY_EXTENSION: ''
+
+# jobs:
+#   setup:
+#     runs-on: ubuntu-latest
+#     environment: test
+#     env:
+#       ECR_REGISTRY_PRIVATE_URI: ${{ vars.AWS_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION_NAME }}.amazonaws.com
+#       ECR_REGISTRY_PUBLIC_URI: public.ecr.aws
+#     outputs:
+#       ECR_REPOSITORY_NAME: ${{ steps.get-output.outputs.ECR_REPOSITORY_NAME }}
+#       ECR_LOGIN_PASSWORD: ${{ steps.get-output.outputs.ECR_LOGIN_PASSWORD }}
+#       ECR_REGISTRY_URI: ${{ steps.get-output.outputs.ECR_REGISTRY_URI }}
+#       IMAGE_TAG: ${{ steps.get-output.outputs.IMAGE_TAG }}
+#       ECR_REPOSITORY_EXTENSION: ${{ steps.get-output.outputs.ECR_REPOSITORY_EXTENSION }}
+
+#     steps:
+#       - name: setup AWS CLI
+#         run: |
+#           aws --version
+#           aws configure set aws_access_key_id ${{ vars.AWS_ACCESS_KEY }}
+#           aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_KEY }}
+#           aws configure set region ${{ vars.AWS_REGION_NAME }}
+
+#       - name: Get ECR information
+#         id: get-output
+#         run: |
+#           echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_OUTPUT
+#           echo "ECR_REPOSITORY_EXTENSION=$ECR_REPOSITORY_EXTENSION" >> $GITHUB_OUTPUT
+
+#           REPOSITORY_NAME=$(basename ${{ github.repository }})
+
+#           ECR_REPOSITORY_NAME=$(echo $REPOSITORY_NAME-$BRANCH_NAME | tr A-Z a-z)
+#           echo "ECR_REPOSITORY_NAME=$ECR_REPOSITORY_NAME" >> $GITHUB_OUTPUT
+
+#           if [[ $ECR_PRIVACY == private ]]; then
+#             echo "ECR_LOGIN_PASSWORD=$(aws ecr get-login-password --region ${{ vars.AWS_REGION_NAME }})" >> $GITHUB_OUTPUT
+#             echo "ECR_REGISTRY_URI=$ECR_REGISTRY_PRIVATE_URI" >> $GITHUB_OUTPUT            
+#           elif [[ $ECR_PRIVACY == public ]]; then
+#             echo "ECR_LOGIN_PASSWORD=$(aws ecr-public get-login-password --region us-east-1)" >> $GITHUB_OUTPUT
+#             echo "ECR_REGISTRY_URI=$ECR_REGISTRY_PUBLIC_URI" >> $GITHUB_OUTPUT  
+#           fi
+
+  # # WARNING: It's costly to test
+  # cuda:
+  #   needs: [setup]
+  #   runs-on: ubuntu-latest
+  #   environment: test
+  #   container: 
+  #     image: ${{ needs.setup.outputs.ECR_REGISTRY_URI }}/${{ needs.setup.outputs.ECR_REPOSITORY_NAME}}${{ needs.setup.outputs.ECR_REPOSITORY_EXTENSION }}:${{ needs.setup.outputs.IMAGE_TAG }}
+  #     credentials:
+  #       username: AWS
+  #       password: ${{ needs.setup.outputs.ECR_LOGIN_PASSWORD }}
+  #   env:      
+  #     AWS_REGION_NAME: ${{ vars.AWS_REGION_NAME }}
+  #     AWS_PROFILE_NAME: ${{ vars.AWS_PROFILE_NAME }}
+  #     AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}
+  #     AWS_ACCESS_KEY: ${{ vars.AWS_ACCESS_KEY }}
+  #     AWS_SECRET_KEY: ${{ secrets.AWS_SECRET_KEY }}
+  #     GITHUB_OWNER: ${{ github.repository_owner }}
+  #     GITHUB_TOKEN: ${{ secrets.GH_TERRA_TOKEN }}
+  #     DOMAIN_NAME: vistimi
+  #     DOMAIN_SUFFIX: com
+
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v3
+  #     - name: Versions
+  #       run: |
+  #         terraform --version
+  #         terragrunt --version
+  #     - name: Setup AWS CLI
+  #       id: setup
+  #       run: |
+  #         make aws-auth
+  #     - name: Setup Github CLI
+  #       run: |
+  #         make -f Makefile_infra gh-auth-check
+  #     - name: Setup Test
+  #       run: |
+  #         make prepare-terragrunt
+  #         make prepare-aws-microservice
+  #         go test -timeout 60m -p 1 -v -cover ./test/aws/microservice/cuda
+  #         export SKIP_deploy=true
+  #         export SKIP_validate=true
+  #         go test -timeout 60m -p 1 -v -cover ./test/aws/microservice/cuda
+
+#   rest:
+#     needs: [setup]
+#     runs-on: ubuntu-latest
+#     environment: test
+#     container: 
+#       image: ${{ needs.setup.outputs.ECR_REGISTRY_URI }}/${{ needs.setup.outputs.ECR_REPOSITORY_NAME}}${{ needs.setup.outputs.ECR_REPOSITORY_EXTENSION }}:${{ needs.setup.outputs.IMAGE_TAG }}
+#       credentials:
+#         username: AWS
+#         password: ${{ needs.setup.outputs.ECR_LOGIN_PASSWORD }}
+#     env:
+#       AWS_REGION_NAME: ${{ vars.AWS_REGION_NAME }}
+#       AWS_PROFILE_NAME: ${{ vars.AWS_PROFILE_NAME }}
+#       AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}
+#       AWS_ACCESS_KEY: ${{ vars.AWS_ACCESS_KEY }}
+#       AWS_SECRET_KEY: ${{ secrets.AWS_SECRET_KEY }}
+#       GITHUB_OWNER: ${{ github.repository_owner }}
+#       GITHUB_TOKEN: ${{ secrets.GH_TERRA_TOKEN }}
+#       DOMAIN_NAME: vistimi
+#       DOMAIN_SUFFIX: com
+
+#     steps:
+#       - name: Checkout
+#         uses: actions/checkout@v3
+#       - name: Versions
+#         run: |
+#           terraform --version
+#           terragrunt --version
+#       - name: Setup AWS CLI
+#         id: setup
+#         run: |
+#           make aws-auth
+#       - name: Setup Github CLI
+#         run: |
+#           make -f Makefile_infra gh-auth-check
+#       - name: Setup Test
+#         run: |
+#           make prepare-terragrunt
+#           make prepare-aws-microservice
+#           go test -timeout 60m -p 1 -v -cover ./test/aws/microservice/rest
+#           export SKIP_deploy=true
+#           export SKIP_validate=true
+#           go test -timeout 60m -p 1 -v -cover ./test/aws/microservice/rest
