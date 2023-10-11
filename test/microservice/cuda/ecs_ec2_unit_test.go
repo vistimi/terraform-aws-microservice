@@ -6,7 +6,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/gruntwork-io/terratest/modules/terraform"
 	terratestStructure "github.com/gruntwork-io/terratest/modules/test-structure"
-	testAwsModule "github.com/vistimi/terraform-aws-microservice/module"
+	testAwsModule "github.com/vistimi/terraform-aws-microservice/modules"
 	"github.com/vistimi/terraform-aws-microservice/util"
 )
 
@@ -60,10 +60,10 @@ var (
 // https://docs.aws.amazon.com/elastic-inference/latest/developerguide/ei-dlc-ecs-pytorch.html
 // https://docs.aws.amazon.com/deep-learning-containers/latest/devguide/deep-learning-containers-ecs-tutorials-training.html
 func Test_Unit_Microservice_GPU_ECS_EC2_Mnist(t *testing.T) {
-	nameSuffix, tags, trafficsMap, dockerMap := testAwsModule.SetupMicroservice(t, microserviceInformation, traffics)
+	id, tags, trafficsMap, dockerMap := testAwsModule.SetupMicroservice(t, microserviceInformation, traffics)
 	serviceNameSuffix := "unique"
 
-	name := util.Format("-", projectName, serviceName, nameSuffix)
+	name := util.Format("-", projectName, serviceName, util.GetEnvVariable("AWS_PROFILE_NAME"), id)
 
 	options := util.Ptr(terraform.Options{
 		TerraformDir: microservicePath,

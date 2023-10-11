@@ -46,7 +46,7 @@ module "acm" {
 # -----------------
 #     Route53
 # -----------------
-// ecs service discovery is alternative to route53
+// ecs service discovery is an alternative to route53
 module "route53_records" {
   source = "../record"
 

@@ -7,7 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/gruntwork-io/terratest/modules/terraform"
 	terratestStructure "github.com/gruntwork-io/terratest/modules/test-structure"
-	testAwsModule "github.com/vistimi/terraform-aws-microservice/module"
+	testAwsModule "github.com/vistimi/terraform-aws-microservice/modules"
 	"github.com/vistimi/terraform-aws-microservice/util"
 
 	terratestShell "github.com/gruntwork-io/terratest/modules/shell"
@@ -83,7 +83,6 @@ var (
 // https://docs.aws.amazon.com/elastic-inference/latest/developerguide/ei-dlc-ecs-pytorch.html
 // https://docs.aws.amazon.com/deep-learning-containers/latest/devguide/deep-learning-containers-ecs-tutorials-training.html
 func Test_Unit_Microservice_Rest_ECS_EC2_Httpd(t *testing.T) {
-
 	bashCode := fmt.Sprintf("echo SOME_VAR=some_value > %s/override.env", microservicePath)
 	command := terratestShell.Command{
 		Command: "bash",
@@ -91,10 +90,10 @@ func Test_Unit_Microservice_Rest_ECS_EC2_Httpd(t *testing.T) {
 	}
 	terratestShell.RunCommandAndGetOutput(t, command)
 
-	nameSuffix, tags, trafficsMap, dockerMap := testAwsModule.SetupMicroservice(t, microserviceInformation, traffics)
+	id, tags, trafficsMap, dockerMap := testAwsModule.SetupMicroservice(t, microserviceInformation, traffics)
 	serviceNameSuffix := "unique"
 
-	name := util.Format("-", projectName, serviceName, nameSuffix)
+	name := util.Format("-", projectName, serviceName, util.GetEnvVariable("AWS_PROFILE_NAME"), id)
 
 	options := util.Ptr(terraform.Options{
 		TerraformDir: microservicePath,
@@ -146,7 +145,20 @@ func Test_Unit_Microservice_Rest_ECS_EC2_Httpd(t *testing.T) {
 				},
 				"ecs": map[string]any{},
 			},
+
 			"traffics": trafficsMap,
+
+			"route53": map[string]any{
+				"zones": []map[string]any{
+					{
+						"name": fmt.Sprintf("%s.%s", util.GetEnvVariable("DOMAIN_NAME"), util.GetEnvVariable("DOMAIN_SUFFIX")),
+					},
+				},
+				"record": map[string]any{
+					"prefixes":       []string{"www"},
+					"subdomain_name": name,
+				},
+			},
 
 			"bucket_env": map[string]any{
 				"force_destroy": true,

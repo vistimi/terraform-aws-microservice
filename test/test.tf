@@ -8,7 +8,7 @@ locals {
   partition   = data.aws_partition.current.partition  // aws
   region_name = data.aws_region.current.name
 
-  bucket_name = join("-", [var.name, "env"])
+  bucket_name = "test-env"
 
   iam_statements = [
     {
@@ -20,69 +20,37 @@ locals {
       actions   = ["s3:GetObject"]
       resources = ["arn:${local.partition}:s3:::${local.bucket_name}/*"]
       effect    = "Allow"
-    },
+    }
   ]
 
   iam_conditions = [
+    # {
+    #   test     = "ForAnyValue"
+    #   variable = "aws:PrincipalServiceNamesList"
+    #   values   = ["ec2.amazonaws.com", "ecs.amazonaws.com", "eks.amazonaws.com"]
+    # },
     {
       test     = "ArnLike"
       variable = "aws:SourceArn"
       values = [
-        "arn:${local.partition}:*:${local.region_name}:${local.account_id}:*${var.name}*",
+        "arn:${local.partition}:*:${local.region_name}:${local.account_id}:*test*",
       ]
     }
   ]
 }
 
-resource "aws_kms_key" "objects" {
-  for_each = var.encryption != null ? { 0 = {} } : {}
-
-  description             = "KMS key is used to encrypt bucket objects"
-  deletion_window_in_days = var.encryption.deletion_window_in_days
-
-  tags = var.tags
-}
-
-resource "aws_kms_alias" "a" {
-  for_each = var.encryption != null ? { 0 = {} } : {}
-
-  name          = "alias/${local.bucket_name}"
-  target_key_id = aws_kms_key.objects[0].arn
-}
-
-module "s3_bucket" {
-  source  = "terraform-aws-modules/s3-bucket/aws"
-  version = "3.11.0"
-
-  bucket = local.bucket_name
-  # acl    = "private"  # no need if policy is tight
-
-  versioning = var.versioning ? {
-    enabled = true
-  } : {}
-
-  attach_policy = true
-  policy        = data.aws_iam_policy_document.bucket_policy.json
-  force_destroy = var.force_destroy
-
-  # control_object_ownership = true
-  # object_ownership         = "ObjectWriter"
-
-  server_side_encryption_configuration = var.encryption != null ? {
-    rule = {
-      apply_server_side_encryption_by_default = {
-        kms_master_key_id = aws_kms_key.objects[0].arn
-        sse_algorithm     = "aws:kms"
-      }
-    }
-  } : {}
-
-  tags = var.tags
-}
-
 data "aws_iam_policy_document" "bucket_policy" {
   dynamic "statement" {
-    for_each = local.iam_statements
+    for_each = concat(
+      local.iam_statements,
+      true != null ? [
+        {
+          actions   = ["kms:GetPublicKey", "kms:GetKeyPolicy", "kms:DescribeKey"]
+          resources = ["arn:${local.partition}:s3:::${local.bucket_name}"]
+          effect    = "Allow"
+        },
+      ] : []
+    )
 
     content {
       actions   = statement.value.actions
@@ -105,4 +73,8 @@ data "aws_iam_policy_document" "bucket_policy" {
       }
     }
   }
+}
+
+output "name" {
+  value = data.aws_iam_policy_document.bucket_policy.json
 }

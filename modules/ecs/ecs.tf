@@ -140,6 +140,11 @@ module "ecs" {
               effect    = "Allow"
               resources = ["arn:${local.partition}:s3:::${var.bucket_env.name}/${var.bucket_env.file_key}"],
             },
+            bucket-encryption = {
+              actions   = ["kms:GetPublicKey", "kms:GetKeyPolicy", "kms:DescribeKey"]
+              effect    = "Allow"
+              resources = ["arn:${local.partition}:kms:${local.region_name}:${local.account_id}:alias/${var.bucket_env.name}"],
+            },
           },
           {}
         ),

@@ -90,12 +90,11 @@ type Traffic struct {
 	Base     *bool
 }
 
-func SetupMicroservice(t *testing.T, microserviceInformation MicroserviceInformation, traffics []Traffic) (nameSuffix string, tags map[string]string, trafficsMap []map[string]any, docker map[string]any) {
+func SetupMicroservice(t *testing.T, microserviceInformation MicroserviceInformation, traffics []Traffic) (id string, tags map[string]string, trafficsMap []map[string]any, docker map[string]any) {
 	rand.Seed(time.Now().UnixNano())
 
 	// global variables
-	id := util.RandomID(4)
-	nameSuffix = strings.ToLower(util.Format("-", util.GetEnvVariable("AWS_PROFILE_NAME"), id))
+	id = util.RandomID(4)
 	tags = map[string]string{
 		"TestID":  id,
 		"Account": util.GetEnvVariable("AWS_ACCOUNT_ID"),
@@ -149,7 +148,7 @@ func SetupMicroservice(t *testing.T, microserviceInformation MicroserviceInforma
 		}
 	}
 
-	return nameSuffix, tags, trafficsMap, docker
+	return id, tags, trafficsMap, docker
 }
 
 func ValidateMicroservice(t *testing.T, name string, deployment DeploymentTest, serviceName string) {

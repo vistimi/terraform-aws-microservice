@@ -6,7 +6,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/gruntwork-io/terratest/modules/terraform"
 	terratestStructure "github.com/gruntwork-io/terratest/modules/test-structure"
-	testAwsModule "github.com/vistimi/terraform-aws-microservice/module"
+	testAwsModule "github.com/vistimi/terraform-aws-microservice/modules"
 	"github.com/vistimi/terraform-aws-microservice/util"
 )
 
@@ -60,10 +60,10 @@ var (
 // https://docs.aws.amazon.com/elastic-inference/latest/developerguide/ei-dlc-ecs-pytorch.html
 // https://docs.aws.amazon.com/deep-learning-containers/latest/devguide/deep-learning-containers-ecs-tutorials-training.html
 func Test_Unit_Microservice_FPGA_ECS_EC2_Densenet(t *testing.T) {
-	nameSuffix, tags, trafficsMap, dockerMap := testAwsModule.SetupMicroservice(t, microserviceInformation, traffics)
+	id, tags, trafficsMap, dockerMap := testAwsModule.SetupMicroservice(t, microserviceInformation, traffics)
 	serviceNameSuffix := "unique"
 
-	name := util.Format("-", projectName, serviceName, nameSuffix)
+	name := util.Format("-", projectName, serviceName, util.GetEnvVariable("AWS_PROFILE_NAME"), id)
 
 	options := util.Ptr(terraform.Options{
 		TerraformDir: microservicePath,
@@ -92,13 +92,12 @@ func Test_Unit_Microservice_FPGA_ECS_EC2_Densenet(t *testing.T) {
 									"-c",
 								},
 								"command": []string{
-									// "apt update; apt install git wget curl -qy; git clone https://github.com/pytorch/serve.git; cd serve; ls examples/image_classifier/densenet_161/; wget https://download.pytorch.org/models/densenet161-8d451a50.pth; torch-model-archiver --model-name densenet161 --version 1.0 --model-file examples/image_classifier/densenet_161/model.py --serialized-file densenet161-8d451a50.pth --handler image_classifier --extra-files examples/image_classifier/index_to_name.json; mkdir -p model_store; mv densenet161.mar model_store/; echo load_models=ALL >> config.properties; echo inference_address=http://0.0.0.0:8080 >> config.properties; echo management_address=http://0.0.0.0:8081 >> config.properties; echo metrics_address=http://0.0.0.0:8082 >> config.properties; torchserve --start --ts-config config.properties --model-store model_store --models densenet161=densenet161.mar; sleep infinity",
 									"apt update; apt install git wget curl -qy",
 									"git clone https://github.com/pytorch/serve.git; cd serve; ls examples/image_classifier/densenet_161/; wget https://download.pytorch.org/models/densenet161-8d451a50.pth",
 									"torch-model-archiver --model-name densenet161 --version 1.0 --model-file examples/image_classifier/densenet_161/model.py --serialized-file densenet161-8d451a50.pth --handler image_classifier --extra-files examples/image_classifier/index_to_name.json",
 									"mkdir -p model_store; mv densenet161.mar model_store/",
-									"echo load_models=ALL >> config.properties; echo inference_address=http://0.0.0.0:8080 >> config.properties; echo management_address=http://0.0.0.0:8081 >> config.properties; echo metrics_address=http://0.0.0.0:8082 >> config.properties",
-									"torchserve --start --ts-config config.properties --model-store model_store --models densenet161=densenet161.mar",
+									"echo load_models=ALL >> config.properties; echo inference_address=http://0.0.0.0:8080 >> config.properties; echo management_address=http://0.0.0.0:8081 >> config.properties; echo metrics_address=http://0.0.0.0:8082 >> config.properties; echo default_workers_per_model=1 >> config.properties",
+									"torchserve --start --ncs --ts-config config.properties --model-store model_store --models densenet161=densenet161.mar",
 									"sleep infinity",
 								},
 								"readonly_root_filesystem": false,
