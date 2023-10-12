@@ -73,7 +73,7 @@ variable "ecs" {
           cpu                = number
           memory             = number
           memory_reservation = number
-          devices_idx        = optional(list(number))
+          device_idxs        = optional(list(number))
           environments = optional(list(object({
             name  = string
             value = string

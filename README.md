@@ -15,6 +15,7 @@ The microservice has the following specifications:
 - Auto scaling
 - DNS with Route53
 - Environement file
+- CLoudwatch logs
 - Container orchestrators
   - [ ] ECS
     - [x] Fargate
@@ -63,7 +64,7 @@ It means that the memory given to the container or the service or both is superi
 Scaling activity `<id>`: Failed: We currently do not have sufficient `<instance_type>` capacity in the Availability Zone you requested (us-east-1c). Our system will be working on provisioning additional capacity. You can currently get `<instance_type>` capacity by not specifying an Availability Zone in your request or choosing us-east-1a, us-east-1b, us-east-1d, us-east-1f. Launching EC2 instance failed
 ```
 
-It means that not every available zone has an instance available. Unfortunately AWS does not have enough capacity in some regions. A possible solution would be to retry deploying the microservice until it is successful.
+It means that not available instances in the available zones. Unfortunately AWS does not have enough capacity in some regions. A possible solution would be to retry deploying the microservice until it is successful.
 
 ## License
 

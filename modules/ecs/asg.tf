@@ -2,6 +2,7 @@ locals {
   # https://github.com/aws/amazon-ecs-agent/blob/master/README.md
   # https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-gpu.html
   # <<- is required compared to << because there should be no identation for EOT and EOF to work properly
+  # TODO: remove ECS_NVIDIA_RUNTIME
   user_data = {
     for capacity in var.ecs.service.ec2.capacities : capacity.type => <<-EOT
         #!/bin/bash
@@ -29,7 +30,7 @@ module "asg" {
       instance_type  = instance_type
       capacity       = capacity
       }
-    ]]) : join("-", compact([var.name, substr(obj.capacity.type, 0, 2), "${obj.instance_regex.prefix}-${obj.instance_regex.size_number}${substr(obj.instance_regex.size_name, 0, 1)}"])) => { instance_type = obj.instance_type, capacity = obj.capacity }
+    ]]) : lower(join("-", compact([var.name, substr(obj.capacity.type, 0, 2), "${obj.instance_regex.prefix}-${obj.instance_regex.size_number}${substr(obj.instance_regex.size_name, 0, 1)}"]))) => { instance_type = obj.instance_type, capacity = obj.capacity }
   }
 
   name           = each.key

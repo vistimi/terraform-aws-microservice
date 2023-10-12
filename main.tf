@@ -68,7 +68,7 @@ module "ecs" {
               {
                 cpu         = coalesce(container.cpu, local.instances_properties[var.orchestrator.group.ec2.instance_types[0]].cpu)
                 memory      = coalesce(container.memory, local.instances_properties[var.orchestrator.group.ec2.instance_types[0]].memory_available)
-                devices_idx = coalesce(container.devices_idx, try(range(length(local.instances_properties[var.orchestrator.group.ec2.instance_types[0]].device_paths)), []))
+                device_idxs = coalesce(container.device_idxs, try(range(local.instances_properties[var.orchestrator.group.ec2.instance_types[0]].device_count), null), [])
               },
             )
           ]
@@ -80,6 +80,7 @@ module "ecs" {
         os             = var.orchestrator.group.ec2.os
         os_version     = var.orchestrator.group.ec2.os_version
         capacities     = var.orchestrator.group.ec2.capacities
+        # manufacturer   = try(one(local.instances_properties).device.manufacturer, "")
 
         architecture   = one(values(local.instances_specs)).architecture
         processor_type = one(values(local.instances_specs)).processor_type
@@ -94,9 +95,9 @@ module "ecs" {
 # module "eks" {
 #   source = "./modules/eks"
 
-#   for_each = var.orchestrator.eks != null ? { "${var.name}" = {} } : {}
+#   for_each = var.orchestrator.eks != null ? { "${local.name}" = {} } : {}
 
-#   name     = var.name
+#   name     = local.name
 #   vpc      = local.vpc
 #   route53  = var.route53
 #   traffics = var.traffics
@@ -133,7 +134,7 @@ module "ecs" {
 module "bucket_env" {
   source = "./modules/bucket"
 
-  for_each = var.bucket_env != null ? { "${var.name}" = {} } : {}
+  for_each = var.bucket_env != null ? { 0 = {} } : {}
 
   name          = var.name
   force_destroy = var.bucket_env.force_destroy
@@ -146,7 +147,7 @@ module "bucket_env" {
 }
 
 resource "aws_s3_object" "env" {
-  for_each = var.bucket_env != null ? { "${var.name}" = {} } : {}
+  for_each = var.bucket_env != null ? { 0 = {} } : {}
 
   key                    = var.bucket_env.file_key
   bucket                 = module.bucket_env[each.key].bucket.name

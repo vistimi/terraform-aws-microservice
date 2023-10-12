@@ -1,6 +1,7 @@
 package microservice_test
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -67,7 +68,7 @@ func Test_Unit_Microservice_Grpc_ECS_EC2(t *testing.T) {
 	id, tags, trafficsMap, dockerMap := testAwsModule.SetupMicroservice(t, microserviceInformation, traffics)
 	serviceNameSuffix := "unique"
 
-	name := util.Format("-", projectName, serviceName, util.GetEnvVariable("AWS_PROFILE_NAME"), id)
+	name := strings.ToLower(util.Format("-", projectName, serviceName, util.GetEnvVariable("AWS_PROFILE_NAME"), id))
 
 	options := util.Ptr(terraform.Options{
 		TerraformDir: microservicePath,

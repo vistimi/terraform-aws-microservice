@@ -258,7 +258,7 @@ module "ecs" {
 
           resource_requirements = try(var.ecs.service.ec2.architecture == "gpu", false) ? [{
             "type" : "GPU",
-            "value" : "${length(container.device_idx)}"
+            "value" : "${length(container.device_idxs)}"
           }] : []
 
           # command = flatten(concat([
@@ -305,7 +305,7 @@ module "ecs" {
           # working_directory = ""
 
           linuxParameters = var.ecs.service.ec2.architecture == "inf" ? {
-            "devices" = [for device_idx in container.devices_idx : {
+            "devices" = [for device_idx in container.device_idxs : {
               "containerPath" = "/dev/neuron${device_idx}",
               "hostPath"      = "/dev/neuron${device_idx}",
               "permissions" : ["read", "write"],

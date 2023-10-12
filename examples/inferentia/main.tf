@@ -43,15 +43,15 @@ module "microservice" {
           {
             name        = "first-two-chips"
             cpu         = 12288
-            memory      = 24576 - 500 # minus the size taken by the orchestrator
-            devices_idx = [0, 1]
+            memory      = 24576 - 500 # minus the approximate size taken by the orchestrator
+            device_idxs = [0, 1]
             # ...
           },
           {
             name        = "second-two-chips"
             cpu         = 12288
-            memory      = 24576 - 500 # minus the size taken by the orchestrator
-            devices_idx = [2, 3]
+            memory      = 24576 - 500 # minus the approximate size taken by the orchestrator
+            device_idxs = [2, 3]
             # ...
           }
         ]

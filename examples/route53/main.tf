@@ -8,7 +8,10 @@ module "microservice" {
 
   name = local.name
 
-  # will create an available DNS record like www.microservice-with-dns.mydomain.com and whatever.microservice-with-dns.mydomain.com
+  # will create the following DNS records: 
+  # - microservice-with-dns.mydomain.com
+  # - www.microservice-with-dns.mydomain.com
+  # - whatever.microservice-with-dns.mydomain.com
   route53 = {
     zones = [{
       name = local.hosted_zone_name

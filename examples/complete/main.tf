@@ -1,4 +1,4 @@
-module "microservice_complete" {
+module "microservice" {
   source = "vistimi/microservice/aws"
 
   name = "microservice-complete"

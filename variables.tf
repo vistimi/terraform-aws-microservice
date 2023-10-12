@@ -104,6 +104,8 @@ variable "traffics" {
 }
 
 variable "orchestrator" {
+  description = "The container orchestrator uses in `group` the common configuration. `ecs` and `eks` contain specific configurations. You can only choose the `ec2` or `fargate` deployment not both."
+
   type = object({
     group = object({
       name = string
@@ -118,8 +120,8 @@ variable "orchestrator" {
           base               = optional(bool)
           cpu                = optional(number)
           memory             = optional(number)
-          memory_reservation = optional(number, 50)
-          devices_idx        = optional(list(number))
+          memory_reservation = optional(number, 0)
+          device_idxs        = optional(list(number))
           environments = optional(list(object({
             name  = string
             value = string
@@ -245,25 +247,6 @@ variable "orchestrator" {
   }
 }
 
-data "aws_ec2_instance_types" "region" {
-  filter {
-    name   = "instance-type"
-    values = [for instance_type in var.orchestrator.group.ec2.instance_types : instance_type]
-  }
-
-  lifecycle {
-    postcondition {
-      condition     = sort(distinct([for instance_type in var.orchestrator.group.ec2.instance_types : instance_type])) == sort(distinct(self.instance_types))
-      error_message = <<EOF
-ec2 instances type are not all available
-want::
-${jsonencode(sort([for instance_type in var.orchestrator.group.ec2.instance_types : instance_type]))}
-got::
-${jsonencode(sort(self.instance_types))}
-EOF
-    }
-  }
-}
 
 # ebs_device_map = {
 #   amazon2       = "/dev/sdf"
