@@ -11,8 +11,9 @@ variable "tags" {
 
 variable "vpc" {
   type = object({
-    id   = string
-    tier = string
+    id               = string
+    subnet_tier_ids  = list(string)
+    subnet_intra_ids = list(string)
   })
 }
 
@@ -31,8 +32,8 @@ variable "route53" {
 
 variable "bucket_env" {
   type = object({
-    name          = string
-    file_key      = string
+    name     = string
+    file_key = string
   })
   default = null
 }

@@ -10,9 +10,8 @@ The configuration aims to support Kubernetes and have the same modules for other
 The microservice has the following specifications:
 
 - Load balancer
-  - HTTP
-  - HTTPS
-  - gRPC
+  - HTTP(S)
+  - Rest/gRPC
 - Auto scaling
 - DNS with Route53
 - Environement file
@@ -28,6 +27,8 @@ The microservice has the following specifications:
   - [ ] EKS
     - [ ] Fargate
     - [ ] EC2
+
+To see which specific instances are supported, please check [instances](). Feel free to contribute to the project by adding features or isntances
 
 ## Architecture
 
@@ -55,7 +56,7 @@ Go check the [tests](https://github.com/vistimi/terraform-aws-microservice/tree/
 The closest matching container-instance `<id>` has insufficient memory available. For more information, see the Troubleshooting section of the Amazon ECS Developer Guide
 ```
 
-It means that the memory given to the container or the service or both is superior to what is allowed. ECS requires a certain amount of memory to run and is different for each instance. They are hardcoded currently in microservice.ecs.instance
+It means that the memory given to the container or the service or both is superior to what is allowed. ECS requires a certain amount of memory to run and is different for each instance. They are hardcoded currently in instance.tf
 
 ##### insufficient instances
 ```

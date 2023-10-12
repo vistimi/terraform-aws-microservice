@@ -104,7 +104,7 @@ module "asg" {
   min_size                        = floor(var.min_count * var.capacity_provider.weight / var.capacity_weight_total)
   max_size                        = ceil(var.max_count * var.capacity_provider.weight / var.capacity_weight_total)
   desired_capacity                = ceil(var.desired_count * var.capacity_provider.weight / var.capacity_weight_total)
-  vpc_zone_identifier             = local.subnets
+  vpc_zone_identifier             = var.vpc.subnet_tier_ids
   health_check_type               = "EC2"
   target_group_arns               = var.target_group_arns
   security_groups                 = [module.autoscaling_sg.security_group_id]

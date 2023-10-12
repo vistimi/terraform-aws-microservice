@@ -1,3 +1,1 @@
-# Complete
-
-Go check the [examples](https://github.com/vistimi/terraform-aws-microservice/tree/trunk/examples)
+# Complete example for the microservice

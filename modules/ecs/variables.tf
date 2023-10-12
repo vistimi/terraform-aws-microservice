@@ -11,8 +11,8 @@ variable "tags" {
 
 variable "vpc" {
   type = object({
-    id   = string
-    tier = string
+    id              = string
+    subnet_tier_ids = list(string)
   })
 }
 

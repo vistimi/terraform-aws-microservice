@@ -63,7 +63,7 @@ module "ecs" {
       }
 
       # network awsvpc for fargate
-      subnets          = var.ecs.service.ec2 != null ? null : local.subnets
+      subnets          = var.ecs.service.ec2 != null ? null : var.vpc.subnet_tier_ids
       assign_public_ip = var.ecs.service.ec2 != null ? null : true // if private subnets, use NAT
 
       load_balancer = {
@@ -76,7 +76,7 @@ module "ecs" {
       }
 
       # security group
-      subnet_ids = local.subnets
+      subnet_ids = var.vpc.subnet_tier_ids
       security_group_rules = merge(
         {
           for target in distinct([for traffic in var.traffics : {

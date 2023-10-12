@@ -1,11 +1,7 @@
-locals {
-  name = "microservice-with-env"
-}
-
 module "microservice" {
   source = "vistimi/microservice/aws"
 
-  name = local.name
+  name = "microservice-with-env"
 
   bucket_env = {
     force_destroy = true

@@ -10,10 +10,19 @@ variable "tags" {
 }
 
 variable "vpc" {
+  description = "Tier is where the instances will be created. Specify either the subnet ids or add a tag key `Tier` and possible values `private`, `public` or `intra`. ECS requires only tier subnet. EKS requires in addition the tier and intra subnets."
+
   type = object({
-    id   = string
-    tier = string
+    id               = string
+    subnet_intra_ids = optional(list(string))
+    subnet_tier_ids  = optional(list(string))
+    tag_tier         = optional(string)
   })
+
+  validation {
+    condition     = var.vpc.tag_tier == null ? length(coalesce(var.vpc.subnet_tier_ids, [])) >= 2 : true
+    error_message = "For a Load Balancer: At least two subnets in two different Availability Zones must be specified, subnets: ${jsonencode(var.vpc.subnet_tier_ids)}, tag: ${jsonencode(var.vpc.tag_tier)}"
+  }
 }
 
 variable "route53" {
@@ -41,7 +50,7 @@ variable "bucket_env" {
 
 variable "traffics" {
   description = "It contains the networking configuration. Only one element can be the base, the base is necessary only if there are more than one element, the target configuration matters only for the base. The default `protocol_version` is HTTP1."
-  
+
   type = list(object({
     listener = object({
       protocol         = string

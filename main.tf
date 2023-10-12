@@ -46,7 +46,7 @@ module "ecs" {
   source = "./modules/ecs"
 
   name     = var.name
-  vpc      = var.vpc
+  vpc      = local.vpc
   route53  = var.route53
   traffics = local.traffics
   bucket_env = var.bucket_env != null ? {
@@ -97,7 +97,7 @@ module "ecs" {
 #   for_each = var.orchestrator.eks != null ? { "${var.name}" = {} } : {}
 
 #   name     = var.name
-#   vpc      = var.vpc
+#   vpc      = local.vpc
 #   route53  = var.route53
 #   traffics = var.traffics
 #   bucket_env = try({

@@ -22,22 +22,7 @@ data "aws_subnets" "tier" {
   }
 }
 
-data "aws_subnets" "intra" {
-  filter {
-    name   = "vpc-id"
-    values = [data.aws_vpc.current.id]
-  }
-  tags = {
-    Tier = "intra"
-  }
 
-  lifecycle {
-    postcondition {
-      condition     = length(self.ids) >= 2
-      error_message = "For a Load Balancer: At least two intra subnets in two different Availability Zones must be specified, tier: intra, subnets: ${jsonencode(self.ids)}"
-    }
-  }
-}
 
 locals {
   account_id       = data.aws_caller_identity.current.account_id
@@ -45,8 +30,6 @@ locals {
   dns_suffix       = data.aws_partition.current.dns_suffix // amazonaws.com
   partition        = data.aws_partition.current.partition  // aws
   region_name      = data.aws_region.current.name
-  tier_subnet_ids  = data.aws_subnets.tier.ids
-  intra_subnet_ids = data.aws_subnets.intra.ids
 
   # traffics = [for traffic in var.traffics : {
   #   listener = merge(traffic.listener, {

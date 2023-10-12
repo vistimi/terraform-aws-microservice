@@ -75,8 +75,8 @@ module "eks" {
   }
 
   vpc_id                   = var.vpc.id
-  subnet_ids               = local.tier_subnet_ids
-  control_plane_subnet_ids = local.intra_subnet_ids
+  subnet_ids               = var.vpc.subnet_tier_ids
+  control_plane_subnet_ids = var.vpc.subnet_intra_ids
 
   # Extend cluster security group rules
   # cluster_security_group_additional_rules = {
@@ -112,7 +112,7 @@ module "eks" {
       #   source_security_group_ids = [module.ssh_sg[key].security_group_id]
       # }, null)
 
-      subnet_ids = local.tier_subnet_ids
+      subnet_ids = var.vpc.subnet_tier_ids
       ami_id     = local.image_id
       # disk_size  = 50
 
@@ -303,14 +303,14 @@ module "eks" {
 # }
 
 resource "aws_ec2_tag" "tier" {
-  for_each = { for subnet_id in local.tier_subnet_ids : subnet_id => {} }
+  for_each = { for subnet_id in var.vpc.subnet_tier_ids : subnet_id => {} }
 
   resource_id = each.key
   key         = "kubernetes.io/role/elb"
   value       = 1
 }
 resource "aws_ec2_tag" "intra" {
-  for_each = { for subnet_id in local.intra_subnet_ids : subnet_id => {} }
+  for_each = { for subnet_id in var.vpc.subnet_intra_ids : subnet_id => {} }
 
   resource_id = each.key
   key         = "kubernetes.io/role/control-plane"

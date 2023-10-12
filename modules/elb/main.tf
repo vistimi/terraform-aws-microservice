@@ -34,7 +34,7 @@ module "elb" {
   load_balancer_type = local.load_balancer_types[local.traffic_base.listener.protocol] // map listener base to load balancer
 
   vpc_id          = var.vpc.id
-  subnets         = local.subnets
+  subnets         = var.vpc.subnet_tier_ids
   security_groups = local.load_balancer_types[local.traffic_base.listener.protocol] == "application" ? [module.elb_sg.security_group_id] : []
 
   http_tcp_listeners = [

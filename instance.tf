@@ -61,19 +61,21 @@ locals {
       memory_available = 15730
     }
 
-    // inference
+    # trainium
     # "trn1.2xlarge" = {
     #   cpu              = 8192
     #   memory           = 32768
-    #   memory_available = 0 // TODO: not tested yet
+    #   memory_available = 32768 // TODO: not tested yet
     #   device_paths     = ["/dev/neuron0"]
     # }
     # "trn1.2xlarge" = {
     #   cpu              = 131072
     #   memory           = 524288
-    #   memory_available = 0 // TODO: not tested yet
+    #   memory_available = 524288 // TODO: not tested yet
     #   device_paths     = ["/dev/neuron0", "/dev/neuron1", "/dev/neuron2", "/dev/neuron3", "/dev/neuron4", "/dev/neuron5", "/dev/neuron6", "/dev/neuron7", "/dev/neuron8", "/dev/neuron9", "/dev/neuron10", "/dev/neuron11", "/dev/neuron12", "/dev/neuron13", "/dev/neuron14", "/dev/neuron15"]
     # }
+
+    // inferentia
     "inf1.xlarge" = {
       cpu              = 4096
       memory           = 8192
@@ -89,19 +91,19 @@ locals {
     "inf1.6xlarge" = {
       cpu              = 24576
       memory           = 49152
-      memory_available = 49000 // TODO: not tested yet
+      memory_available = 49152 // TODO: not tested yet
       device_paths     = ["/dev/neuron0", "/dev/neuron1", "/dev/neuron2", "/dev/neuron3"]
     }
     "inf2.xlarge" = {
       cpu              = 8192
       memory           = 16384
-      memory_available = 16000 // TODO: not tested yet
+      memory_available = 16384 // TODO: not tested yet
       device_paths     = ["/dev/neuron0"]
     }
     "inf2.8xlarge" = {
       cpu              = 32768
       memory           = 131072
-      memory_available = 131000 // TODO: not tested yet
+      memory_available = 131072 // TODO: not tested yet
       device_paths     = ["/dev/neuron0"]
     }
   }

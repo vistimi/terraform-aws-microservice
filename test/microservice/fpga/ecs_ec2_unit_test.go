@@ -69,8 +69,8 @@ func Test_Unit_Microservice_FPGA_ECS_EC2_Densenet(t *testing.T) {
 			"name": name,
 
 			"vpc": map[string]any{
-				"id":   util.GetEnvVariable("VPC_ID"),
-				"tier": "public",
+				"id":       util.GetEnvVariable("VPC_ID"),
+				"tag_tier": "public",
 			},
 
 			"orchestrator": map[string]any{

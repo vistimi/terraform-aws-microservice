@@ -1,11 +1,7 @@
-locals {
-  name             = "microservice-with-grpc"
-}
-
 module "microservice" {
   source = "vistimi/microservice/aws"
 
-  name = local.name
+  name = "microservice-with-grpc"
 
   traffics = [
     {
@@ -18,6 +14,14 @@ module "microservice" {
         protocol_version  = "grpc"
         health_check_path = "/helloworld.Greeter/SayHello"
         status_code       = "0"
+      }
+      base = true # only one base that will be the default traffic for the load balancer
+    },
+    {
+      # this will redirect https:444 to grpc:50051
+      listener = {
+        port     = 444
+        protocol = "https"
       }
     }
   ]
