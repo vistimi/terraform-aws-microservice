@@ -1,9 +1,0 @@
-module "microservice" {
-  source = "vistimi/microservice/aws"
-
-  name = "empty"
-
-  traffics     = [] # ...
-  vpc          = {} # ...
-  orchestrator = {} # ...
-}
