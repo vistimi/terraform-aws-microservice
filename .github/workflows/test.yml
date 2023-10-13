@@ -16,7 +16,6 @@ env:
 jobs:
   setup:
     runs-on: ubuntu-latest
-    environment: test
     env:
       ECR_REGISTRY_PRIVATE_URI: ${{ vars.AWS_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION_NAME }}.amazonaws.com
       ECR_REGISTRY_PUBLIC_URI: public.ecr.aws
@@ -26,6 +25,10 @@ jobs:
       ECR_REGISTRY_URI: ${{ steps.get-output.outputs.ECR_REGISTRY_URI }}
       IMAGE_TAG: ${{ steps.get-output.outputs.IMAGE_TAG }}
       ECR_REPOSITORY_EXTENSION: ${{ steps.get-output.outputs.ECR_REPOSITORY_EXTENSION }}
+    strategy:
+      matrix:
+        environment: ['test']
+    environment: ${{ matrix.environment }}
 
     steps:
       - name: setup AWS CLI
@@ -57,7 +60,6 @@ jobs:
   test:
     needs: [setup]
     runs-on: ubuntu-latest
-    environment: test
     container: 
       image: ${{ needs.setup.outputs.ECR_REGISTRY_URI }}/${{ needs.setup.outputs.ECR_REPOSITORY_NAME}}${{ needs.setup.outputs.ECR_REPOSITORY_EXTENSION }}:${{ needs.setup.outputs.IMAGE_TAG }}
       credentials:
@@ -67,6 +69,9 @@ jobs:
       matrix:
         # dir_name: ["cuda", "fpga", ...]
         dir_name: ["rest", "grpc"]
+        environment: ['test']
+    environment: ${{ matrix.environment }}
+
     env:      
       AWS_REGION_NAME: ${{ vars.AWS_REGION_NAME }}
       AWS_PROFILE_NAME: ${{ vars.AWS_PROFILE_NAME }}

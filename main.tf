@@ -1,5 +1,5 @@
 locals {
-  tags = merge(var.tags, { VpcId = "${var.vpc.id}" })
+  tags = merge(var.tags, { VpcId = var.vpc.id })
 
   listeners = [for traffic in var.traffics : merge(traffic.listener, {
     port = coalesce(
