@@ -56,7 +56,7 @@ variable "instance_type" {
   type = string
 }
 
-variable "processor_type" {
+variable "chip_type" {
   type = string
 }
 

@@ -82,8 +82,8 @@ module "ecs" {
         capacities     = var.orchestrator.group.ec2.capacities
         # manufacturer   = try(one(local.instances_properties).device.manufacturer, "")
 
-        architecture   = one(values(local.instances_specs)).architecture
-        processor_type = one(values(local.instances_specs)).processor_type
+        architecture = one(values(local.instances_specs)).architecture
+        chip_type    = one(values(local.instances_specs)).chip_type
       }
       fargate = var.orchestrator.group.fargate
     }
@@ -119,7 +119,7 @@ module "ecs" {
 #         capacities     = var.orchestrator.group.ec2.capacities
 
 #         architecture   = one(values(local.instances_specs)).architecture
-#         processor_type = one(values(local.instances_specs)).processor_type
+#         chip_type = one(values(local.instances_specs)).chip_type
 #       }
 #       fargate = var.orchestrator.group.fargate
 #     }

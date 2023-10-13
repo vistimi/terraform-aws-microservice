@@ -21,11 +21,30 @@ locals {
   instances_arch = {
     for instance_type, instance_data in local.instances :
     instance_type => (
-      contains(["t", "m", "c", "z", "u-", "x", "r", "dl", "trn", "f", "vt", "i", "d", "h", "hpc"], instance_data.instance_family) && contains(["", "i"], substr(instance_data.instance_prefix, length(instance_data.instance_family) + 1, 1)) ? "x86_64" : (
-        contains(["t", "m", "c", "r", "i", "Im", "Is", "hpc"], instance_data.instance_family) && contains(["a", "g"], substr(instance_data.instance_prefix, length(instance_data.instance_family) + 1, 1)) ? "arm64" : (
-          contains(["p", "g"], instance_data.instance_family) ? "gpu" : (
-            contains(["inf"], instance_data.instance_family) ? "inf" : null
-          )
+      contains(["", "i"], substr(instance_data.instance_prefix, length(instance_data.instance_family) + 1, 1)) ? "x86_64" : (
+        contains(["a", "g"], substr(instance_data.instance_prefix, length(instance_data.instance_family) + 1, 1)) ? "arm64" : null
+      )
+    )
+
+    # (
+    #   contains(["t", "m", "c", "z", "u-", "x", "r", "dl", "trn", "f", "vt", "i", "d", "h", "hpc"], instance_data.instance_family) && contains(["", "i"], substr(instance_data.instance_prefix, length(instance_data.instance_family) + 1, 1)) ? "x86_64" : (
+    #     contains(["t", "m", "c", "r", "i", "Im", "Is", "hpc"], instance_data.instance_family) && contains(["a", "g"], substr(instance_data.instance_prefix, length(instance_data.instance_family) + 1, 1)) ? "arm64" : (
+    #       contains(["p", "g"], instance_data.instance_family) ? "gpu" : (
+    #         contains(["inf"], instance_data.instance_family) ? "inf" : null
+    #       )
+    #     )
+    #   )
+    # )
+  }
+
+  cpu_x86_64 = ["t", "m", "c", "z", "u-", "x", "r", "dl", "f", "vt", "i", "d", "h", "hpc"]
+  cpu_arm64  = ["t", "m", "c", "r", "i", "Im", "Is", "hpc"]
+  instances_chip_type = {
+    for instance_type, instance_data in local.instances :
+    instance_type => (
+      contains(distinct(concat(local.cpu_x86_64, local.cpu_arm64)), instance_data.instance_family) ? "cpu" : (
+        contains(["p", "g"], instance_data.instance_family) ? "gpu" : (
+          contains(["inf", "trn"], instance_data.instance_family) ? "inf" : null
         )
       )
     )
@@ -41,9 +60,7 @@ locals {
       processor_family      = substr(instance_data.instance_prefix, length(instance_data.instance_family) + 1, 1)
       additional_capability = substr(instance_data.instance_prefix, length(instance_data.instance_family) + 2, -1)
       instance_size         = instance_data.instance_size
-      processor_type = local.instances_arch[instance_type] == "gpu" ? "gpu" : (
-        local.instances_arch[instance_type] == "inf" ? "inf" : "cpu"
-      )
+      chip_type             = local.instances_chip_type[instance_type]
     }
   }
 
@@ -85,7 +102,7 @@ resource "null_resource" "instance" {
 
   lifecycle {
     precondition {
-      condition     = contains(["inf", "gpu", "cpu"], each.value.processor_type) ? length(var.orchestrator.group.ec2.instance_types) == 1 : true
+      condition     = contains(["inf", "gpu", "cpu"], each.value.chip_type) ? length(var.orchestrator.group.ec2.instance_types) == 1 : true
       error_message = "ec2 inf/gpu/cpu instance types must contain only one element, got ${jsonencode(var.orchestrator.group.ec2.instance_types)}"
     }
 
@@ -95,12 +112,12 @@ resource "null_resource" "instance" {
     }
 
     precondition {
-      condition     = contains(["inf", "gpu"], each.value.processor_type) ? length(var.orchestrator.group.ec2.instance_types) == 1 : true
+      condition     = contains(["inf", "gpu"], each.value.chip_type) ? length(var.orchestrator.group.ec2.instance_types) == 1 : true
       error_message = "ec2 inf/gpu instance types must contain only one element, got ${jsonencode(var.orchestrator.group.ec2.instance_types)}"
     }
 
     precondition {
-      condition     = contains(["gpu", "inf"], each.value.processor_type) ? alltrue([for idx in flatten([for container in var.orchestrator.group.deployment.containers : coalesce(container.device_idxs, [])]) : idx > 0 && idx < local.instances_properties[var.orchestrator.group.ec2.instance_types[0]].device_count]) : true
+      condition     = contains(["gpu", "inf"], each.value.chip_type) ? alltrue([for idx in flatten([for container in var.orchestrator.group.deployment.containers : coalesce(container.device_idxs, [])]) : idx > 0 && idx < local.instances_properties[var.orchestrator.group.ec2.instance_types[0]].device_count]) : true
       error_message = <<EOF
 ec2 gpu/inf containers must have available device indexes, got: ${jsonencode(sort(flatten([for container in var.orchestrator.group.deployment.containers : coalesce(container.device_idxs, [])])))}
 available: ${jsonencode(range(local.instances_properties[var.orchestrator.group.ec2.instance_types[0]].device_count))}

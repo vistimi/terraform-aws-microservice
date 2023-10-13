@@ -78,7 +78,7 @@ variable "eks" {
         os             = string
         os_version     = string
         architecture   = string
-        processor_type = string
+        chip_type      = string
 
         capacities = optional(list(object({
           type = optional(string, "ON_DEMAND")

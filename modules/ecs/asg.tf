@@ -33,9 +33,9 @@ module "asg" {
     ]]) : lower(join("-", compact([var.name, substr(obj.capacity.type, 0, 2), "${obj.instance_regex.prefix}-${obj.instance_regex.size_number}${substr(obj.instance_regex.size_name, 0, 1)}"]))) => { instance_type = obj.instance_type, capacity = obj.capacity }
   }
 
-  name           = each.key
-  instance_type  = each.value.instance_type
-  processor_type = var.ecs.service.ec2.processor_type
+  name          = each.key
+  instance_type = each.value.instance_type
+  chip_type     = var.ecs.service.ec2.chip_type
 
   capacity_provider = {
     weight = each.value.capacity.weight

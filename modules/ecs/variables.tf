@@ -114,7 +114,7 @@ variable "ecs" {
         os             = string
         os_version     = string
         architecture   = string
-        processor_type = string
+        chip_type      = string
 
         asg = optional(object({
           instance_refresh = object({

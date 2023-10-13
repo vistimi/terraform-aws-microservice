@@ -16,7 +16,7 @@ locals {
 
 data "aws_ssm_parameter" "eks_optimized_ami_id" {
   # TODO: handle no ec2
-  name = local.ami_ssm_name[join("-", ["amazon", var.eks.group.ec2.os, var.eks.group.ec2.os_version, var.eks.group.ec2.architecture, var.eks.group.ec2.processor_type])]
+  name = local.ami_ssm_name[join("-", ["amazon", var.eks.group.ec2.os, var.eks.group.ec2.os_version, var.eks.group.ec2.architecture, var.eks.group.ec2.chip_type])]
 }
 
 locals {
