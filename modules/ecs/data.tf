@@ -24,10 +24,12 @@ locals {
     private = "ecr"
     public  = "ecr-public"
   }
-  fargate_os = {
+
+  os_to_ecs_os_mapping = {
     linux = "LINUX"
   }
-  fargate_architecture = {
+  arch_to_ecs_arch_mapping = {
     x86_64 = "X86_64"
+    arm64  = "ARM64"
   }
 }

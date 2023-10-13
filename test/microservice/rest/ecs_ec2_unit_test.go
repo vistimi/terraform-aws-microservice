@@ -124,7 +124,7 @@ func Test_Unit_Microservice_Rest_ECS_EC2_Httpd(t *testing.T) {
 
 					"ec2": map[string]any{
 						"key_name":       nil,
-						"instance_types": []string{"t3.small"},
+						"instance_types": []string{"c7g.2xlarge"},
 						"os":             "linux",
 						"os_version":     "2023",
 

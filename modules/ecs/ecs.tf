@@ -221,6 +221,14 @@ module "ecs" {
         ]
       ])
 
+      runtime_platform = var.ecs.service.ec2 != null ? {
+        "operatingSystemFamily" = local.os_to_ecs_os_mapping[var.ecs.service.ec2.os],
+        "cpuArchitecture"       = local.arch_to_ecs_arch_mapping[var.ecs.service.ec2.architecture],
+        } : {
+        "operatingSystemFamily" = local.os_to_ecs_os_mapping[var.ecs.service.fargate.os],
+        "cpuArchitecture"       = local.arch_to_ecs_arch_mapping[var.ecs.service.fargate.architecture],
+      }
+
       # Task definition container(s)
       # https://github.com/terraform-aws-modules/terraform-aws-ecs/blob/master/modules/container-definition/variables.tf
       container_definitions = {
@@ -319,12 +327,6 @@ module "ecs" {
             } : {
             devices      = []
             capabilities = {}
-          }
-
-          # fargate AMI
-          runtime_platform = var.ecs.service.ec2 != null ? null : {
-            "operatingSystemFamily" = local.fargate_os[var.ecs.service.fargate.os],
-            "cpuArchitecture"       = local.fargate_architecture[var.ecs.service.fargate.architecture],
           }
 
           image = join("/", compact([
