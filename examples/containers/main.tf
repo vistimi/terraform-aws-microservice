@@ -12,7 +12,6 @@ module "microservice" {
             base               = true
             cpu                = 2048
             memory             = 2048
-            memory_reservation = 100 # optional: will remove memory_reservation from container memory to leave some overhead
             # ...
           },
           {

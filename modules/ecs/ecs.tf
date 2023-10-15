@@ -23,7 +23,7 @@ module "ecs" {
     }
   }, {})
   autoscaling_capacity_providers = {
-    for capacity in var.ecs.service.ec2.capacities :
+    for capacity in try(var.ecs.service.ec2.capacities, []) :
     "${var.name}-${capacity.type}" => {
       name                   = "${var.name}-${capacity.type}"
       auto_scaling_group_arn = one(values(module.asg)).autoscaling.group_arn
@@ -259,8 +259,8 @@ module "ecs" {
             }
           ]
           cpu                = container.cpu
-          memory             = container.memory - container.memory_reservation
-          memory_reservation = container.memory - container.memory_reservation
+          memory             = container.memory
+          memory_reservation = container.memory
 
           log_configuration = null # other driver than json-file
 
@@ -312,7 +312,7 @@ module "ecs" {
           # volumes_from      = []
           # working_directory = ""
 
-          linuxParameters = var.ecs.service.ec2.architecture == "inf" ? {
+          linuxParameters = try(var.ecs.service.ec2.architecture == "inf", false) ? {
             "devices" = [for device_idx in container.device_idxs : {
               "containerPath" = "/dev/neuron${device_idx}",
               "hostPath"      = "/dev/neuron${device_idx}",

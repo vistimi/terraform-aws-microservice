@@ -40,6 +40,7 @@ locals {
     target   = local.base_target
     base     = traffic.base
   }]
+
 }
 
 module "ecs" {
@@ -59,33 +60,35 @@ module "ecs" {
       task = merge(
         var.orchestrator.group.deployment,
         {
-          cpu    = local.instances_properties[var.orchestrator.group.ec2.instance_types[0]].cpu
-          memory = local.instances_properties[var.orchestrator.group.ec2.instance_types[0]].memory_available
+          cpu    = var.orchestrator.group.fargate != null ? var.orchestrator.group.deployment.cpu : null
+          memory = var.orchestrator.group.fargate != null ? var.orchestrator.group.deployment.memory : null
           containers = [
             for container in var.orchestrator.group.deployment.containers :
             merge(
               container,
               {
-                cpu         = coalesce(container.cpu, local.instances_properties[var.orchestrator.group.ec2.instance_types[0]].cpu)
-                memory      = coalesce(container.memory, local.instances_properties[var.orchestrator.group.ec2.instance_types[0]].memory_available)
+                cpu         = coalesce(container.cpu, try(local.instances_properties[var.orchestrator.group.ec2.instance_types[0]].cpu, null))
+                memory      = coalesce(container.memory, try(local.instances_properties[var.orchestrator.group.ec2.instance_types[0]].memory_available, null))
                 device_idxs = coalesce(container.device_idxs, try(range(local.instances_properties[var.orchestrator.group.ec2.instance_types[0]].device_count), null), [])
               },
             )
           ]
         },
       )
-      ec2 = {
+      ec2 = var.orchestrator.group.ec2 != null ? {
         key_name       = var.orchestrator.group.ec2.key_name
         instance_types = var.orchestrator.group.ec2.instance_types
         os             = var.orchestrator.group.ec2.os
         os_version     = var.orchestrator.group.ec2.os_version
         capacities     = var.orchestrator.group.ec2.capacities
-        # manufacturer   = try(one(local.instances_properties).device.manufacturer, "")
-
-        architecture = one(values(local.instances_specs)).architecture
-        chip_type    = one(values(local.instances_specs)).chip_type
-      }
-      fargate = var.orchestrator.group.fargate
+        architecture   = one(values(local.instances_specs)).architecture
+        chip_type      = one(values(local.instances_specs)).chip_type
+      } : null
+      fargate = var.orchestrator.group.fargate != null ? {
+        os           = var.orchestrator.group.fargate.os
+        architecture = var.orchestrator.group.fargate.architecture
+        capacities   = var.orchestrator.group.fargate.capacities
+      } : null
     }
   }
 

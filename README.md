@@ -15,16 +15,18 @@ The microservice has the following specifications:
 - Auto scaling
 - DNS with Route53
 - Environement file
-- CLoudwatch logs
+- Cloudwatch logs
 - Container orchestrators
   - [ ] ECS
     - [x] Fargate
     - [ ] EC2
-      - [x] CPU
-      - [x] GPU
-      - [x] Inferentia
-      - [ ] Trainium
-      - [ ] Gaudi
+      - [x] General Purpose
+      - [x] Compute Optimized
+      - [x] Memory Optimized
+      - [x] Accelerated Computing (GPU, Inferentia, Trainium)
+      - [ ] Accelerated Computing (Gaudi) config not ok/not tested
+      - [ ] Storage Optimized: config ok/not tested
+      - [ ] HPC Optimized: config ok/not tested
   - [ ] EKS
     - [ ] Fargate
     - [ ] EC2
@@ -57,7 +59,7 @@ Go check the [tests](https://github.com/vistimi/terraform-aws-microservice/tree/
 The closest matching container-instance `<id>` has insufficient memory available. For more information, see the Troubleshooting section of the Amazon ECS Developer Guide
 ```
 
-It means that the memory given to the container or the service or both is superior to what is allowed. ECS requires a certain amount of memory to run and is different for each instance. Currently there is only 90% of the memory used for the containers, leaving enough overhead space to not encounter that problem. Please notify if this ever happens.
+It means that the memory given to the container or the service or both is superior to what is allowed. ECS requires a certain amount of memory to run and is different for each instance. Currently there is only 90% of the memory used for the containers, leaving enough overhead space to not encounter that problem. To override that from happening you can override the memory and cpu allocation by specifying it in the containers.
 
 ##### insufficient instances
 ```

@@ -114,14 +114,15 @@ variable "orchestrator" {
         max_size        = number
         desired_size    = number
         maximum_percent = optional(number)
+        cpu             = optional(number)
+        memory          = optional(number)
 
         containers = list(object({
-          name               = string
-          base               = optional(bool)
-          cpu                = optional(number)
-          memory             = optional(number)
-          memory_reservation = optional(number, 0)
-          device_idxs        = optional(list(number))
+          name        = string
+          base        = optional(bool)
+          cpu         = optional(number)
+          memory      = optional(number)
+          device_idxs = optional(list(number))
           environments = optional(list(object({
             name  = string
             value = string
@@ -166,7 +167,10 @@ variable "orchestrator" {
           type   = optional(string, "ON_DEMAND")
           base   = optional(number)
           weight = optional(number, 1)
-        })))
+          })), [{
+          type   = "ON_DEMAND"
+          weight = 1
+        }])
       }))
       fargate = optional(object({
         os           = string
@@ -176,7 +180,10 @@ variable "orchestrator" {
           type   = optional(string, "ON_DEMAND")
           base   = optional(number)
           weight = optional(number, 1)
-        })))
+          })), [{
+          type   = "ON_DEMAND"
+          weight = 1
+        }])
       }))
     })
     eks = optional(object({
@@ -218,31 +225,39 @@ variable "orchestrator" {
     error_message = "containers must have one base or be unique"
   }
 
-  # # fargate
-  # validation {
-  #   condition     = contains(["linux"], var.fargate.os)
-  #   error_message = "Fargate os must be one of [linux]"
-  # }
+  # fargate
+  validation {
+    condition     = var.orchestrator.group.fargate != null ? contains(["linux"], try(var.orchestrator.group.fargate.os, "")) : true
+    error_message = "Fargate os must be one of [linux]"
+  }
 
-  # validation {
-  #   condition     = var.fargate.os == "linux" ? contains(["x86_64", "arm64"], var.fargate.architecture) : false
-  #   error_message = "Fargate architecture must for one of linux:[x86_64, arm64]"
-  # }
+  validation {
+    condition = var.orchestrator.group.fargate != null ? (
+      try(var.orchestrator.group.fargate.os, "") == "linux" ? contains(["x86_64", "arm64"], var.orchestrator.group.fargate.architecture) : false
+    ) : true
+    error_message = "Fargate architecture must for one of linux:[x86_64, arm64]"
+  }
 
   # ec2 instance_type
   validation {
-    condition     = length(distinct(var.orchestrator.group.ec2.instance_types)) == length(var.orchestrator.group.ec2.instance_types)
+    condition = var.orchestrator.group.ec2 != null ? (
+      length(distinct(var.orchestrator.group.ec2.instance_types)) == length(var.orchestrator.group.ec2.instance_types)
+    ) : true
     error_message = "ec2 instance types must all be unique"
   }
 
   # ec2 os
   validation {
-    condition     = contains(["linux"], var.orchestrator.group.ec2.os)
+    condition = var.orchestrator.group.ec2 != null ? (
+      contains(["linux"], var.orchestrator.group.ec2.os)
+    ) : true
     error_message = "EC2 os must be one of [linux]"
   }
 
   validation {
-    condition     = var.orchestrator.group.ec2.os == "linux" ? contains(["2", "2023"], var.orchestrator.group.ec2.os_version) : false
+    condition = var.orchestrator.group.ec2 != null ? (
+      var.orchestrator.group.ec2.os == "linux" ? contains(["2", "2023"], var.orchestrator.group.ec2.os_version) : false
+    ) : true
     error_message = "EC2 os version must be one of linux:[2, 2023]"
   }
 }

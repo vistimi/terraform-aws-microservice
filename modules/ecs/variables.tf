@@ -68,12 +68,11 @@ variable "ecs" {
         memory          = number
 
         containers = list(object({
-          name               = string
-          base               = optional(bool)
-          cpu                = number
-          memory             = number
-          memory_reservation = number
-          device_idxs        = optional(list(number))
+          name        = string
+          base        = optional(bool)
+          cpu         = number
+          memory      = number
+          device_idxs = optional(list(number))
           environments = optional(list(object({
             name  = string
             value = string
@@ -161,7 +160,7 @@ variable "ecs" {
   })
 
   validation {
-    condition     = length(var.ecs.service.ec2.instance_types) == 1
-    error_message = "ECS configuration only supports one instance type yet"
+    condition     = var.ecs.service.ec2 != null ? length(var.ecs.service.ec2.instance_types) == 1 : true
+    error_message = "ECS EC2 configuration only supports one instance type yet"
   }
 }

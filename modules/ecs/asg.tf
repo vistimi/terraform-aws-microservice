@@ -4,7 +4,7 @@ locals {
   # <<- is required compared to << because there should be no identation for EOT and EOF to work properly
   # TODO: remove ECS_NVIDIA_RUNTIME
   user_data = {
-    for capacity in var.ecs.service.ec2.capacities : capacity.type => <<-EOT
+    for capacity in try(var.ecs.service.ec2.capacities, []) : capacity.type => <<-EOT
         #!/bin/bash
         cat <<'EOF' >> /etc/ecs/ecs.config
         ECS_CLUSTER=${var.name}
@@ -12,6 +12,7 @@ locals {
         ECS_ENABLE_TASK_IAM_ROLE=true
         ${var.ecs.service.ec2.architecture == "gpu" ? "ECS_ENABLE_GPU_SUPPORT=true" : ""}
         ${var.ecs.service.ec2.architecture == "gpu" ? "ECS_NVIDIA_RUNTIME=nvidia" : ""}
+        ECS_RESERVED_MEMORY=100
         EOF
       EOT
   }
@@ -25,7 +26,7 @@ module "asg" {
   source = "../asg"
 
   for_each = {
-    for obj in flatten([for instance_type in var.ecs.service.ec2.instance_types : [for capacity in var.ecs.service.ec2.capacities : {
+    for obj in flatten([for instance_type in try(var.ecs.service.ec2.instance_types, []) : [for capacity in try(var.ecs.service.ec2.capacities, []) : {
       instance_regex = regex("^(?P<prefix>\\w+)\\.(?P<size_number>\\d*x*)(?P<size_name>\\w+)$", instance_type)
       instance_type  = instance_type
       capacity       = capacity

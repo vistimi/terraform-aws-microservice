@@ -11,6 +11,7 @@ module "microservice" {
         os             = "linux"
         os_version     = "2023"
         capacities = [
+          # if no capacity provider is specified, `ON_DEMAND` will be used
           {
             type   = "ON_DEMAND"
             base   = true

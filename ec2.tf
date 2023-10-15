@@ -79,6 +79,8 @@ locals {
 }
 
 resource "null_resource" "instances" {
+  for_each = var.orchestrator.group.ec2 != null ? { 0 = {} } : {}
+
   lifecycle {
     precondition {
       condition     = length(distinct([for _, instance_specs in local.instances_specs : instance_specs.architecture])) == 1
@@ -121,6 +123,39 @@ resource "null_resource" "instance" {
       error_message = <<EOF
 ec2 gpu/inf containers must have available device indexes, got: ${jsonencode(sort(flatten([for container in var.orchestrator.group.deployment.containers : coalesce(container.device_idxs, [])])))}
 available: ${jsonencode(range(local.instances_properties[var.orchestrator.group.ec2.instance_types[0]].device_count))}
+EOF
+    }
+  }
+}
+
+data "aws_ec2_instance_type_offerings" "instance_region" {
+  for_each = var.orchestrator.group.ec2 != null ? { 0 = {} } : {}
+
+  filter {
+    name   = "instance-type"
+    values = [for instance_type in var.orchestrator.group.ec2.instance_types : instance_type]
+  }
+
+  filter {
+    name   = "location"
+    values = [local.region_name]
+  }
+
+  location_type = "region"
+}
+
+resource "null_resource" "instance_region" {
+  for_each = var.orchestrator.group.ec2 != null ? { 0 = {} } : {}
+
+  lifecycle {
+    postcondition {
+      condition     = sort(distinct([for instance_type in var.orchestrator.group.ec2.instance_types : instance_type])) == sort(distinct(data.aws_ec2_instance_type_offerings.instance_region[0].instance_types))
+      error_message = <<EOF
+ec2 instances type are not all available in the region
+want::
+${jsonencode(sort([for instance_type in var.orchestrator.group.ec2.instance_types : instance_type]))}
+region::
+${jsonencode(sort(data.aws_ec2_instance_type_offerings.instance_region[0].instance_types))}
 EOF
     }
   }

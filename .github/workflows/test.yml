@@ -5,6 +5,8 @@ on:
         workflows: ["Docker registry"]
         types:
         - completed
+    push:
+      branches: [trunk]
 
 env:
   ECR_PRIVACY: ${{ vars.CONTAINER_REGISTRY_PRIVACY }}
@@ -80,8 +82,8 @@ jobs:
       AWS_SECRET_KEY: ${{ secrets.AWS_SECRET_KEY }}
       GITHUB_OWNER: ${{ github.repository_owner }}
       GITHUB_TOKEN: ${{ secrets.GH_TERRA_TOKEN }}
-      DOMAIN_NAME: vistimi
-      DOMAIN_SUFFIX: com
+      DOMAIN_NAME: ${{ vars.DOMAIN_NAME }}
+      DOMAIN_SUFFIX: ${{ vars.DOMAIN_SUFFIX }}
 
     steps:
       - name: Checkout
