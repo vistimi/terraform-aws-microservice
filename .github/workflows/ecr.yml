@@ -17,6 +17,7 @@ on:
           - delete
   push:
     branches-ignore: [dependabot/**, infrabot/**]
+    paths: [Dockerfile*, '**/Dockerfile*']
   delete:
 
 env:
