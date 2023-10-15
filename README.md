@@ -10,26 +10,26 @@ The configuration aims to support Kubernetes and have the same modules for other
 The microservice has the following specifications:
 
 - Load balancer
-  - HTTP(S)
-  - Rest/gRPC
+    - HTTP(S)
+    - Rest/gRPC
 - Auto scaling
 - DNS with Route53
 - Environement file
 - Cloudwatch logs
 - Container orchestrators
-  - [ ] ECS
-    - [x] Fargate
-    - [ ] EC2
-      - [x] General Purpose
-      - [x] Compute Optimized
-      - [x] Memory Optimized
-      - [x] Accelerated Computing (GPU, Inferentia, Trainium)
-      - [ ] Accelerated Computing (Gaudi) config not ok/not tested
-      - [ ] Storage Optimized: config ok/not tested
-      - [ ] HPC Optimized: config ok/not tested
-  - [ ] EKS
-    - [ ] Fargate
-    - [ ] EC2
+    - [ ] ECS
+      - [x] Fargate
+      - [ ] EC2
+          - [x] General Purpose
+          - [x] Compute Optimized
+          - [x] Memory Optimized
+          - [x] Accelerated Computing (GPU, Inferentia, Trainium)
+          - [ ] Accelerated Computing (Gaudi) config not ok/not tested
+          - [ ] Storage Optimized: config ok/not tested
+          - [ ] HPC Optimized: config ok/not tested
+    - [ ] EKS
+        - [ ] Fargate
+        - [ ] EC2
 
 To see which specific instances are supported, please check [instances](). Feel free to contribute to the project by adding features or isntances
 

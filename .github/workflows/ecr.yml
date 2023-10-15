@@ -1,0 +1,327 @@
+name: Docker registry
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        type: environment
+        description: "Github environment name"
+        required: false
+      event_name:
+        type: choice
+        description: "Type of action event name"
+        required: true
+        options:
+          - push
+          - create
+          - delete
+  push:
+    branches-ignore: [dependabot/**, infrabot/**]
+  delete:
+
+env:
+  ECR_PRIVACY: ${{ vars.CONTAINER_REGISTRY_PRIVACY }}
+  IMAGE_TAG: ${{ github.sha }}
+  ORGANIZATION_NAME: ${{ github.repository_owner }}
+  BRANCH_NAME: ${{ github.event_name == 'delete' && github.event.ref || (github.head_ref || github.ref_name) }}
+  DEFAULT_BRANCH_NAME: ${{ 'trunk' || github.event.repository.default_branch }}
+  ARCHITECTURES: "x86-64 arm-64" # "arm-32"   "arm-64"   "x86-32"   "x86-64"
+  OS: '"Linux"' # "Windows"
+  IMAGE_KEEP_COUNT_DEFAULT: 10
+  IMAGE_KEEP_COUNT_NON_DEFAULT: 5
+
+jobs:
+  ecr:
+    name: ECR
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment || vars.ECR_ENV_NAME }}
+    env:
+      AWS_REGION_NAME: ${{ vars.AWS_REGION_NAME }}
+      AWS_PROFILE_NAME: ${{ vars.AWS_PROFILE_NAME }}
+      ECR_REGISTRY_PRIVATE_URI: ${{ vars.AWS_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION_NAME }}.amazonaws.com
+      ECR_REGISTRY_PUBLIC_URI: public.ecr.aws
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Set env
+        run: |
+          REPOSITORY_NAME=$(basename ${{ github.repository }})
+          echo REPOSITORY_NAME=$REPOSITORY_NAME 
+          echo REPOSITORY_NAME=$REPOSITORY_NAME >> $GITHUB_ENV
+
+          IMAGE_KEEP_COUNT=$(if [[ $BRANCH_NAME == ${{ env.DEFAULT_BRANCH_NAME }} ]]; then echo ${{ env.IMAGE_KEEP_COUNT_DEFAULT }}; else echo ${{ env.IMAGE_KEEP_COUNT_NON_DEFAULT }}; fi)
+          echo IMAGE_KEEP_COUNT=$IMAGE_KEEP_COUNT
+          echo IMAGE_KEEP_COUNT=$IMAGE_KEEP_COUNT >> $GITHUB_ENV
+
+          DOCKERFILES=$(jq --null-input -c \
+          --arg repo_bin  "VARIANT=$(if [[ $ECR_PRIVACY == private ]]; then echo $ECR_REGISTRY_PRIVATE_URI; else echo $ECR_REGISTRY_PUBLIC_URI/$ECR_REGISTRY_PUBLIC_ALIAS; fi)/$(echo $REPOSITORY_NAME-$BRANCH_NAME-bin | tr A-Z a-z)" \
+          '[{ "path":"Dockerfile.bin" },{ "path":"Dockerfile","args": [ $repo_bin ] },{ "path":"Dockerfile.bin","args": [ "TERRAFORM_VERSION=1.4.4","TERRAGRUNT_VERSION=0.45.0"], "tags":["1.4.4"]},{ "path":"Dockerfile","args": [ $repo_bin:1.4.4 ], "tags":["1.4.4"] },{ "path":"Dockerfile.bin","args": [ "VARIANT=mcr.microsoft.com/devcontainers/base:alpine-3.16" ], "extension": "devcontainer" }]')
+          echo DOCKERFILES=$DOCKERFILES
+          echo DOCKERFILES=$DOCKERFILES >> $GITHUB_ENV
+
+      - name: Setup privacy env
+        run: |
+          if [[ $ECR_PRIVACY == private ]]; then
+            # keep default region
+
+            AWS_CLI_SERVICE=ecr
+
+            ECR_REGISTRY_URI=$ECR_REGISTRY_PRIVATE_URI
+          elif [[ $ECR_PRIVACY == public ]]; then
+            AWS_REGION_NAME=us-east-1
+            echo AWS_REGION_NAME=$AWS_REGION_NAME
+            echo AWS_REGION_NAME=$AWS_REGION_NAME >> $GITHUB_ENV
+
+            AWS_CLI_SERVICE=ecr-public
+
+            ECR_REGISTRY_URI=$ECR_REGISTRY_PUBLIC_URI
+          fi
+
+          echo AWS_CLI_SERVICE=$AWS_CLI_SERVICE
+          echo AWS_CLI_SERVICE=$AWS_CLI_SERVICE >> $GITHUB_ENV
+
+          echo ECR_REGISTRY_URI=$ECR_REGISTRY_URI
+          echo ECR_REGISTRY_URI=$ECR_REGISTRY_URI >> $GITHUB_ENV
+
+      - name: Setup AWS CLI
+        run: |
+          aws --version
+          aws configure set aws_access_key_id ${{ vars.AWS_ACCESS_KEY }}
+          aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_KEY }}
+          aws configure set region ${{ vars.AWS_REGION_NAME }}
+          aws configure list
+
+      # - name: Configure AWS Credentials
+      #   uses: aws-actions/configure-aws-credentials@v1
+      #   with:
+      #     aws-access-key-id: ${{ vars.AWS_ACCESS_KEY }}
+      #     aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
+      #     aws-region: ${{ vars.AWS_REGION_NAME }}
+
+      # - name: Login to ${{ vars.CONTAINER_REGISTRY_PRIVACY }} ECR
+      #   uses: docker/login-action@v2
+      #   with:
+      #     registry: ${{ env.ECR_REGISTRY_URI }}
+      #     username: ${{ secrets.AWS_ACCESS_KEY }}
+      #     password: ${{ secrets.AWS_SECRET_KEY }}
+
+      - name: Login to ECR
+        run: |
+          aws $AWS_CLI_SERVICE get-login-password --region $AWS_REGION_NAME | docker login --username AWS --password-stdin $ECR_REGISTRY_URI
+
+      - name: Run workflow for each Dockerfile
+        run: |
+          func_ecr_create_private_repository () {  
+            # create repository
+            ECR_REPOSITORY_URI=$(
+              aws ecr create-repository \
+                --repository-name $ECR_REPOSITORY_NAME \
+                --encryption-configuration encryptionType=KMS \
+                --image-tag-mutability MUTABLE \
+                --image-scanning-configuration scanOnPush=true \
+                --tags Key=Account,Value=$AWS_PROFILE_NAME Key=Region,Value=$AWS_REGION_NAME Key=Organization,Value=$ORGANIZATION_NAME Key=Repository,Value=$REPOSITORY_NAME Key=Branch,Value=$BRANCH_NAME \
+                --query 'repository.repositoryUri' | tr -d '"'
+            )
+            echo ECR_REPOSITORY_URI=$ECR_REPOSITORY_URI
+            echo ECR_REPOSITORY_URI=$ECR_REPOSITORY_URI >> $GITHUB_ENV
+
+            # add lifecycle policy
+            json_string=$(
+              jq --null-input \
+                --argjson count "${IMAGE_KEEP_COUNT}" \
+                '{
+                  rules: [ 
+                    { 
+                      rulePriority: 1, 
+                      description: "Keep only \($count) images", 
+                      selection: { tagStatus: "any", 
+                      countType: "imageCountMoreThan", countNumber: $count }, 
+                      action: { type: "expire" } 
+                    } 
+                  ] 
+                }'
+            )
+            echo $json_string > ecr-lifecycle-policy.json
+            aws ecr put-lifecycle-policy --repository-name $ECR_REPOSITORY_NAME --lifecycle-policy-text "file://ecr-lifecycle-policy.json"
+
+            # add repository policy
+            json_string=$(
+              jq --null-input \
+                --arg accountId "${AWS_ACCOUNT_ID}" \
+                '{
+                  Version: "2012-10-17", 
+                  Statement: [ 
+                    { 
+                      Effect: "Allow", 
+                      Principal: { Service: "ec2.amazonaws.com" }, 
+                      Action: [ "ecr:BatchCheckLayerAvailability", "ecr:BatchGetImage", "ecr:GetDownloadUrlForLayer" ], 
+                      Condition: { "StringEquals": { "aws:SourceAccount": $accountId } }
+                    } 
+                  ] 
+                }'
+            )
+            echo $json_string > ecr-repository-policy.json
+            aws ecr set-repository-policy --repository-name $ECR_REPOSITORY_NAME --policy-text "file://ecr-repository-policy.json"
+          }
+
+          func_ecr_get_ecr_platforms () {
+            PLATFORMS=""
+            for architecture in $ARCHITECTURES; do
+              if [ "$architecture" == "x86-64" ]; then
+                PLATFORMS=$(if [[ -z $PLATFORMS ]]; then echo '"x86-64"'; else echo $PLATFORMS',"x86-64"'; fi)
+              elif [ "$architecture" == "arm-64" ]; then
+                PLATFORMS=$(if [[ -z $PLATFORMS ]]; then echo '"ARM 64"'; else echo $PLATFORMS',"ARM 64"'; fi)
+              else
+                continue
+              fi
+              echo PLATFORMS:: $PLATFORMS
+            done
+          }
+
+          func_ecr_create_public_repository () {
+            # TODO: repository catalog data logo ImageBlob
+            # create repository
+            func_ecr_get_ecr_platforms
+
+            ECR_REPOSITORY_URI=$(
+              aws ecr-public create-repository \
+                --repository-name $ECR_REPOSITORY_NAME \
+                --catalog-data description="",architectures=$PLATFORMS,operatingSystems=${{ env.OS }},aboutText="",usageText="" \
+                --tags Key=Account,Value=$AWS_PROFILE_NAME Key=Region,Value=$AWS_REGION_NAME Key=Organization,Value=$ORGANIZATION_NAME Key=Repository,Value=$REPOSITORY_NAME Key=Branch,Value=$BRANCH_NAME \
+                --query 'repository.repositoryUri' | tr -d '"'
+            )
+            echo ECR_REPOSITORY_URI=$ECR_REPOSITORY_URI
+            echo ECR_REPOSITORY_URI=$ECR_REPOSITORY_URI >> $GITHUB_ENV
+          }
+
+          func_ecr_create_repository () {            
+            if [[ $ECR_PRIVACY == private ]]; then
+              echo -e '\033[43mCreating private repository in ECR\033[0m'
+              func_ecr_create_private_repository
+            elif [[ $ECR_PRIVACY == public ]]; then
+              echo -e '\033[43mCreating public repository in ECR\033[0m'
+              func_ecr_create_public_repository              
+            fi
+            echo -e '\033[44mECR REPOSITORY\033[0m'::
+            repository=$(aws $AWS_CLI_SERVICE describe-repositories --repository-names $ECR_REPOSITORY_NAME --output json)
+            echo $repository
+            if [[ -z $repository ]]; then
+              exit 42
+            fi
+          }
+
+          func_ecr_get_buildx_platforms () {
+            PLATFORMS=""
+            for architecture in $ARCHITECTURES; do
+              if [ "$architecture" == "x86-64" ]; then
+                PLATFORMS=$(if [[ -z $PLATFORMS ]]; then echo 'linux/amd64'; else echo $PLATFORMS',linux/amd64'; fi)
+              elif [ "$architecture" == "arm-64" ]; then
+                PLATFORMS=$(if [[ -z $PLATFORMS ]]; then echo 'linux/arm64'; else echo $PLATFORMS',linux/arm64'; fi)
+              else
+                continue
+              fi
+              echo PLATFORMS:: $PLATFORMS
+            done
+          }
+
+          func_ecr_push_image_buildx () {
+            echo -e '\033[43mPushing buildx image to ECR\033[0m'
+            func_ecr_get_buildx_platforms
+            # docker buildx create --name multiarch --platform $PLATFORMS --driver-opt network=host --buildkitd-flags '--allow-insecure-entitlement network.host'
+            docker buildx create --use --name multiarch
+
+            docker buildx inspect multiarch --bootstrap
+
+            BUILD_TAGS=""
+            while read tag; do
+              if [[ -n "$tag" ]]; then
+                BUILD_TAGS="$BUILD_TAGS -t $ECR_REPOSITORY_URI:$tag"
+              fi
+            done <<< "$(jq -rc '.[]?' <<< "$DOCKERFILE_TAGS")"
+            echo BUILD_TAGS:: $BUILD_TAGS
+
+            docker buildx build --push --builder multiarch --platform $PLATFORMS $BUILD_TAGS -f $DOCKERFILE_PATH $DOCKERFILE_ARGS .
+            aws $AWS_CLI_SERVICE describe-images --repository-name $ECR_REPOSITORY_NAME
+            docker manifest inspect $ECR_REPOSITORY_URI
+          }
+
+          func_ecr_push_image () {
+            # check existance of repository
+            ECR_REPOSITORY_URI=$(aws $AWS_CLI_SERVICE describe-repositories --repository-names $ECR_REPOSITORY_NAME --query 'repositories[0].repositoryUri' | tr -d '"')
+            echo ECR_REPOSITORY_URI=$ECR_REPOSITORY_URI
+            if [ -z ${ECR_REPOSITORY_URI} ]; then
+              func_ecr_create_repository
+            else
+              echo -e '\033[46mRepository already exists\033[0m'
+            fi
+
+            # Push new image
+            func_ecr_push_image_buildx
+
+            # echo -e '\033[44mIMAGE SIZE\033[0m' $(docker inspect -f "{{ .Size }}" $(docker images -q $ECR_REPOSITORY_URI:$latest) | numfmt --to=si)
+
+            # Describe new image
+            echo -e '\033[44mECR IMAGE\033[0m'::
+            image=$(aws $AWS_CLI_SERVICE describe-images --repository-name $ECR_REPOSITORY_NAME --image-ids imageTag=latest --output json)
+            echo $image
+            if [[ -z $image ]]; then
+              exit 42
+            fi
+          }
+
+          func_gh_event_to_ecr () {
+            # create/push/delete
+            if [[ "${{ github.event_name }}" == "create" || ("${{ github.event_name }}" == "workflow_dispatch" && "${{ inputs.event_name }}" == "create") ]]; then
+              func_ecr_create_repository
+            elif [[ "${{ github.event_name }}" == "push" || ("${{ github.event_name }}" == "workflow_dispatch" && "${{ inputs.event_name }}" == "push") ]]; then
+              func_ecr_push_image
+            elif [[ "${{ github.event_name }}" == "delete" || ("${{ github.event_name }}" == "workflow_dispatch" && "${{ inputs.event_name }}" == "delete") ]]; then
+              echo -e '\033[43mDeleting repository in ECR\033[0m'
+              aws $AWS_CLI_SERVICE delete-repository --repository-name $ECR_REPOSITORY_NAME --force
+            else
+              echo -e '\033[41mError\033[0m'
+              echo Error: event do not match, event_name ${{ github.event_name }}, inputs.event_name ${{ inputs.event_name }}
+              exit 100
+            fi
+          }
+
+          # loop over dockerfiles
+          jq -rc '.[]' <<< "$DOCKERFILES" | while read dockerfile; do
+            echo $dockerfile
+
+            DOCKERFILE_PATH=$(jq -r '.path' <<< "$dockerfile")
+            echo "DOCKERFILE_PATH:: $DOCKERFILE_PATH"
+
+            DOCKERFILE_TAGS=[\"latest\",\"${IMAGE_TAG:0:8}\"]
+            tags=$(jq -r '.tags' <<< "$dockerfile")
+            if [[ -n "$tags" && $tags != null ]]; then
+              # TODO: add \"${IMAGE_TAG:0:8}\" to tags
+              DOCKERFILE_TAGS=$tags
+            fi
+            echo DOCKERFILE_TAGS:: $DOCKERFILE_TAGS
+
+            # repository extension name
+            extension=$(jq -r '.extension' <<< "$dockerfile")
+            if [[ -n "$extension" && $extension != null ]]; then
+              dockerfile_extension="-$extension"
+            else
+              dockerfile_extension=$([[ "$DOCKERFILE_PATH" = *.* ]] && echo "-${DOCKERFILE_PATH##*.}" || echo '')
+            fi
+            echo dockerfile_extension:: $dockerfile_extension
+            ECR_REPOSITORY_NAME="$(echo $REPOSITORY_NAME-$BRANCH_NAME$dockerfile_extension | tr A-Z a-z)"
+            echo ECR_REPOSITORY_NAME:: $ECR_REPOSITORY_NAME
+
+            # docker build args
+            DOCKERFILE_ARGS=""
+            while read arg; do
+              if [[ -n "$arg" ]]; then
+                echo arg:: $arg
+                DOCKERFILE_ARGS="$DOCKERFILE_ARGS --build-arg=$arg"
+              fi
+            done <<< "$(jq -rc '.args[]?' <<< "$dockerfile")"
+            echo DOCKERFILE_ARGS:: $DOCKERFILE_ARGS
+
+            # run function
+            echo $(func_gh_event_to_ecr)
+          done
