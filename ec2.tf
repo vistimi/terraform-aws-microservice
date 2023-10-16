@@ -9,62 +9,19 @@ locals {
   # https://docs.aws.amazon.com/AmazonECS/latest/developerguide/memory-management.html
   # https://docs.aws.amazon.com/cli/latest/reference/ecs/describe-container-instances.html
 
-  instances = {
+  instance_datas = {
     for instance_type in try(var.orchestrator.group.ec2.instance_types, []) :
-    instance_type => {
-      instance_prefix = regex("^(?P<prefix>\\w+)\\.(?P<size>\\w+)$", instance_type).prefix
-      instance_size   = regex("^(?P<prefix>\\w+)\\.(?P<size>\\w+)$", instance_type).size
-      instance_family = try(one(regex("(mac|u-|dl|trn|inf|vt|Im|Is|hpc)", regex("^(?P<prefix>\\w+)\\.(?P<size>\\w+)$", instance_type).prefix)), substr(instance_type, 0, 1))
-    }
+    instance_type => regex("^(?P<instance_family>\\w+)(?P<instance_generation>\\d)(?P<processor_family>\\w?)(?P<additional_capability>\\w?)\\.(?P<instance_size>\\w+)$", instance_type)
   }
 
-  instances_arch = {
-    for instance_type, instance_data in local.instances :
-    instance_type => (
-      contains(["", "i"], substr(instance_data.instance_prefix, length(instance_data.instance_family) + 1, 1)) ? "x86_64" : (
-        contains(["a", "g"], substr(instance_data.instance_prefix, length(instance_data.instance_family) + 1, 1)) ? "arm64" : null
-      )
-    )
-
-    # (
-    #   contains(["t", "m", "c", "z", "u-", "x", "r", "dl", "trn", "f", "vt", "i", "d", "h", "hpc"], instance_data.instance_family) && contains(["", "i"], substr(instance_data.instance_prefix, length(instance_data.instance_family) + 1, 1)) ? "x86_64" : (
-    #     contains(["t", "m", "c", "r", "i", "Im", "Is", "hpc"], instance_data.instance_family) && contains(["a", "g"], substr(instance_data.instance_prefix, length(instance_data.instance_family) + 1, 1)) ? "arm64" : (
-    #       contains(["p", "g"], instance_data.instance_family) ? "gpu" : (
-    #         contains(["inf"], instance_data.instance_family) ? "inf" : null
-    #       )
-    #     )
-    #   )
-    # )
-  }
-
-  cpu_x86_64 = ["t", "m", "c", "z", "u-", "x", "r", "dl", "f", "vt", "i", "d", "h", "hpc"]
-  cpu_arm64  = ["t", "m", "c", "r", "i", "Im", "Is", "hpc"]
-  instances_chip_type = {
-    for instance_type, instance_data in local.instances :
-    instance_type => (
-      contains(distinct(concat(local.cpu_x86_64, local.cpu_arm64)), instance_data.instance_family) ? "cpu" : (
-        contains(["p", "g"], instance_data.instance_family) ? "gpu" : (
-          contains(["inf", "trn"], instance_data.instance_family) ? "inf" : null
-        )
-      )
+  instance_chip_types = {
+    for instance_type, instance_data in local.instance_datas :
+    instance_type => contains(["p", "g"], instance_data.instance_family) ? "gpu" : (
+      contains(["inf", "trn"], instance_data.instance_family) ? "inf" : "cpu"
     )
   }
 
-  // TODO: add support for mac
-  // gpu and inf both have cpus with either arm or x86 but the configuration doesn't require that to be specified
-  instances_specs = {
-    for instance_type, instance_data in local.instances : instance_type => {
-      family                = instance_data.instance_family
-      generation            = substr(instance_data.instance_prefix, length(instance_data.instance_family) + 0, 1)
-      architecture          = local.instances_arch[instance_type]
-      processor_family      = substr(instance_data.instance_prefix, length(instance_data.instance_family) + 1, 1)
-      additional_capability = substr(instance_data.instance_prefix, length(instance_data.instance_family) + 2, -1)
-      instance_size         = instance_data.instance_size
-      chip_type             = local.instances_chip_type[instance_type]
-    }
-  }
-
-  instances_properties = {
+  instance_specs = {
     for instance in data.aws_ec2_instance_type.current : instance.id => {
       cpu              = instance.default_vcpus * 1024
       memory           = instance.memory_size
@@ -74,6 +31,23 @@ locals {
         try(one(instance.gpus).count, null),
         0,
       )
+      architecture = one(instance.supported_architectures)
+    }
+  }
+
+  instances = {
+    for instance_type, instance_data in local.instance_datas : instance_type => {
+      instance_family       = instance_data.instance_family
+      instance_generation   = instance_data.instance_generation
+      processor_family      = instance_data.processor_family
+      additional_capability = instance_data.additional_capability
+      instance_size         = instance_data.instance_size
+      architecture          = local.instance_specs[instance_type].architecture
+      chip_type             = local.instance_chip_types[instance_type]
+      cpu                   = local.instance_specs[instance_type].cpu
+      memory                = local.instance_specs[instance_type].memory
+      memory_available      = local.instance_specs[instance_type].memory_available
+      device_count          = local.instance_specs[instance_type].device_count
     }
   }
 }
@@ -83,14 +57,14 @@ resource "null_resource" "instances" {
 
   lifecycle {
     precondition {
-      condition     = length(distinct([for _, instance_specs in local.instances_specs : instance_specs.architecture])) == 1
-      error_message = "instances need to have the same architecture: ${jsonencode({ for instance_type, instance_specs in local.instances_specs : instance_type => instance_specs.architecture })}"
+      condition     = length(distinct([for _, instance_specs in local.instances : instance_specs.architecture])) == 1
+      error_message = "instances need to have the same architecture: ${jsonencode({ for instance_type, instance_specs in local.instances : instance_type => instance_specs.architecture })}"
     }
 
     precondition {
-      condition     = alltrue([for instance_type in var.orchestrator.group.ec2.instance_types : contains(keys(local.instances_properties), instance_type)])
+      condition     = alltrue([for instance_type in var.orchestrator.group.ec2.instance_types : contains(keys(local.instance_specs), instance_type)])
       error_message = <<EOF
-only supported instance types are: ${jsonencode(keys(local.instances_properties))}
+only supported instance types are: ${jsonencode(keys(local.instances))}
 got: ${jsonencode(var.orchestrator.group.ec2.instance_types)}
 EOF
     }
@@ -100,7 +74,7 @@ EOF
 # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html
 # https://aws.amazon.com/ec2/instance-types/
 resource "null_resource" "instance" {
-  for_each = { for instance_type, instance_specs in local.instances_specs : instance_type => instance_specs }
+  for_each = { for instance_type, instance_specs in local.instances : instance_type => instance_specs }
 
   lifecycle {
     precondition {
@@ -119,10 +93,10 @@ resource "null_resource" "instance" {
     }
 
     precondition {
-      condition     = contains(["gpu", "inf"], each.value.chip_type) ? alltrue([for idx in flatten([for container in var.orchestrator.group.deployment.containers : coalesce(container.device_idxs, [])]) : idx > 0 && idx < local.instances_properties[var.orchestrator.group.ec2.instance_types[0]].device_count]) : true
+      condition     = contains(["gpu", "inf"], each.value.chip_type) ? alltrue([for idx in flatten([for container in var.orchestrator.group.deployment.containers : coalesce(container.device_idxs, [])]) : idx > 0 && idx < local.instances[var.orchestrator.group.ec2.instance_types[0]].device_count]) : true
       error_message = <<EOF
 ec2 gpu/inf containers must have available device indexes, got: ${jsonencode(sort(flatten([for container in var.orchestrator.group.deployment.containers : coalesce(container.device_idxs, [])])))}
-available: ${jsonencode(range(local.instances_properties[var.orchestrator.group.ec2.instance_types[0]].device_count))}
+available: ${jsonencode(range(local.instances[var.orchestrator.group.ec2.instance_types[0]].device_count))}
 EOF
     }
   }

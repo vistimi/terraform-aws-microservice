@@ -10,6 +10,6 @@ output "env" {
   value = module.bucket_env
 }
 
-output "instances_specs" {
-  value = local.instances_specs
+output "instances" {
+  value = local.instances
 }

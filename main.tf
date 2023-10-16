@@ -67,9 +67,9 @@ module "ecs" {
             merge(
               container,
               {
-                cpu         = coalesce(container.cpu, try(local.instances_properties[var.orchestrator.group.ec2.instance_types[0]].cpu, null))
-                memory      = coalesce(container.memory, try(local.instances_properties[var.orchestrator.group.ec2.instance_types[0]].memory_available, null))
-                device_idxs = coalesce(container.device_idxs, try(range(local.instances_properties[var.orchestrator.group.ec2.instance_types[0]].device_count), null), [])
+                cpu         = coalesce(container.cpu, try(local.instances[var.orchestrator.group.ec2.instance_types[0]].cpu, null))
+                memory      = coalesce(container.memory, try(local.instances[var.orchestrator.group.ec2.instance_types[0]].memory_available, null))
+                device_idxs = coalesce(container.device_idxs, try(range(local.instances[var.orchestrator.group.ec2.instance_types[0]].device_count), null), [])
               },
             )
           ]
@@ -81,8 +81,8 @@ module "ecs" {
         os             = var.orchestrator.group.ec2.os
         os_version     = var.orchestrator.group.ec2.os_version
         capacities     = var.orchestrator.group.ec2.capacities
-        architecture   = one(values(local.instances_specs)).architecture
-        chip_type      = one(values(local.instances_specs)).chip_type
+        architecture   = one(values(local.instances)).architecture
+        chip_type      = one(values(local.instances)).chip_type
       } : null
       fargate = var.orchestrator.group.fargate != null ? {
         os           = var.orchestrator.group.fargate.os

@@ -1,7 +1,11 @@
+locals {
+  name = "microservice-with-acm"
+}
+
 module "microservice" {
   source = "vistimi/microservice/aws"
 
-  name = "microservice-with-acm"
+  name = local.name
 
   traffics = [
     {
@@ -14,6 +18,17 @@ module "microservice" {
       }
     }
   ]
+
+  # needs a route 53 defined
+  route53 = {
+    zones = [{
+      name = "mydomain.com"
+    }]
+    record = {
+      prefixes       = [] # optional
+      subdomain_name = local.name
+    }
+  }
 
   vpc          = {} # ...
   orchestrator = {} # ...

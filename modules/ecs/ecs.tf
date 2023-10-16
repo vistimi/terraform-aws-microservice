@@ -194,7 +194,7 @@ module "ecs" {
       // https://docs.aws.amazon.com/AmazonECS/latest/bestpracticesguide/networking-networkmode.html
       network_mode = var.ecs.service.ec2 != null ? "bridge" : "awsvpc" // "host" for single instance
 
-      placement_constraints = try(var.ecs.service.ec2.architecture == "inf", false) ? [
+      placement_constraints = try(var.ecs.service.ec2.chip_type == "inf", false) ? [
         {
           "type" : "memberOf",
           "expression" : "attribute:ecs.os-type == linux"
@@ -264,7 +264,7 @@ module "ecs" {
 
           log_configuration = null # other driver than json-file
 
-          resource_requirements = try(var.ecs.service.ec2.architecture == "gpu", false) ? [{
+          resource_requirements = try(var.ecs.service.ec2.chip_type == "gpu", false) ? [{
             "type" : "GPU",
             "value" : "${length(container.device_idxs)}"
           }] : []
@@ -312,7 +312,7 @@ module "ecs" {
           # volumes_from      = []
           # working_directory = ""
 
-          linuxParameters = try(var.ecs.service.ec2.architecture == "inf", false) ? {
+          linuxParameters = try(var.ecs.service.ec2.chip_type == "inf", false) ? {
             "devices" = [for device_idx in container.device_idxs : {
               "containerPath" = "/dev/neuron${device_idx}",
               "hostPath"      = "/dev/neuron${device_idx}",

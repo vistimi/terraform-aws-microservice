@@ -103,6 +103,15 @@ variable "traffics" {
   }
 }
 
+resource "null_resource" "acm" {
+  lifecycle {
+    precondition {
+      condition     = anytrue([for traffic in var.traffics : traffic.listener.protocol == "https"]) ? var.route53 != null : true
+      error_message = "if https is used, route53 cannot be null"
+    }
+  }
+}
+
 variable "orchestrator" {
   description = "The container orchestrator uses in `group` the common configuration. `ecs` and `eks` contain specific configurations. You can only choose the `ec2` or `fargate` deployment not both."
 

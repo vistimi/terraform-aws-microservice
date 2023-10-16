@@ -164,7 +164,7 @@ func ValidateMicroservice(t *testing.T, name string, deployment DeploymentTest, 
 
 func ValidateRestEndpoints(t *testing.T, microservicePath string, deployment DeploymentTest, traffics []Traffic, name, modulePath string) {
 	terratestLogger.Log(t, "Validate Rest endpoints")
-	sleepBetweenRetries := 10 * time.Second
+	sleepBetweenRetries := 30 * time.Second
 	terratestLogger.Log(t, fmt.Sprintf("Sleeping %s...", sleepBetweenRetries))
 	time.Sleep(sleepBetweenRetries)
 
@@ -305,7 +305,7 @@ func TestRestEndpoints(t *testing.T, endpoints []EndpointTest) {
 
 func ValidateGrpcEndpoints(t *testing.T, microservicePath string, deployment DeploymentTest, traffics []Traffic, name, modulePath string) {
 	terratestLogger.Log(t, "Validate gRPC endpoints")
-	sleepBetweenRetries := 10 * time.Second
+	sleepBetweenRetries := 30 * time.Second
 	terratestLogger.Log(t, fmt.Sprintf("Sleeping %s...", sleepBetweenRetries))
 	time.Sleep(sleepBetweenRetries)
 
