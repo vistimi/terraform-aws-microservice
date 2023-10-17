@@ -27,7 +27,6 @@ module "microservice" {
         protocol          = "http"  # if not specified, the protocol will be the same as the listener
         health_check_path = "/ping" # if not specified, the health_check_path will be "/"
       }
-      base = true # only one base that will be the default traffic for the load balancer
     },
     {
       # this will redirect https:444 to http:8080

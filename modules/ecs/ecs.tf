@@ -66,23 +66,34 @@ module "ecs" {
       subnets          = var.ecs.service.ec2 != null ? null : var.vpc.subnet_tier_ids
       assign_public_ip = var.ecs.service.ec2 != null ? null : true // if private subnets, use NAT
 
-      load_balancer = {
-        # TODO: this-service
-        service = {
-          target_group_arn = element(module.elb.target_group.arns, 0) // one LB per target group
-          container_name   = length(var.ecs.service.task.containers) == 1 ? "${var.name}-${var.ecs.service.task.containers[0].name}" : [for container in var.ecs.service.task.containers : "${var.name}-${container.name}" if container.base == true][0]
-          container_port   = element([for traffic in var.traffics : traffic.target.port if traffic.base == true || length(var.traffics) == 1], 0)
-        }
-      }
+      load_balancer = merge(
+        # keys need to be known at build time
+        [
+          for container in var.ecs.service.task.containers : {
+            for traffic in container.traffics :
+            join("-", [var.name, container.name, traffic.listener.protocol, traffic.listener.port, "to", traffic.target.protocol, traffic.target.port]) => {
+              target_group_arn = module.elb.target_group.arns[
+                [for index, target in distinct(flatten([for container in var.ecs.service.task.containers : [for traffic in container.traffics : {
+                  port = traffic.target.port
+                }]])) : index if target.port == traffic.target.port][0]
+              ]
+              container_name = "${var.name}-${container.name}"
+              container_port = traffic.target.port
+            }
+          }
+        ]...
+      )
+
 
       # security group
       subnet_ids = var.vpc.subnet_tier_ids
       security_group_rules = merge(
         {
-          for target in distinct([for traffic in var.traffics : {
+          # keys need to be known at build time
+          for target in distinct(flatten([for container in var.ecs.service.task.containers : [for traffic in container.traffics : {
             port     = traffic.target.port
             protocol = traffic.target.protocol
-            }]) : join("-", ["elb", "ingress", target.protocol, target.port]) => {
+            }]])) : join("-", ["elb", "ingress", target.protocol, target.port]) => {
             type                     = "ingress"
             from_port                = target.port
             to_port                  = target.port
@@ -247,17 +258,17 @@ module "ecs" {
           environment = container.environments,
 
           # https://docs.aws.amazon.com/AmazonECS/latest/APIReference/API_PortMapping.html
-          port_mappings = [for target in distinct([for traffic in var.traffics : {
+          port_mappings = distinct([for target in distinct(flatten([for container in var.ecs.service.task.containers : [for traffic in container.traffics : {
             port             = traffic.target.port
             protocol         = traffic.target.protocol
             protocol_version = traffic.target.protocol_version
-            }]) : {
+            }]])) : {
             containerPort = target.port
             hostPort      = var.ecs.service.ec2 != null ? 0 : target.port // "host" network can use target port 
             name          = join("-", ["container", target.protocol, target.port])
             protocol      = target.protocol_version == "grpc" ? "tcp" : target.protocol // TODO: local.layer7_to_layer4_mapping[target.protocol]
             }
-          ]
+          ])
           cpu                = container.cpu
           memory             = container.memory
           memory_reservation = container.memory

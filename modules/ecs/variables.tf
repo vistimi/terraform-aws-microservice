@@ -29,25 +29,6 @@ variable "route53" {
   default = null
 }
 
-variable "traffics" {
-  type = list(object({
-    listener = object({
-      protocol         = string
-      port             = number
-      protocol_version = string
-    })
-    target = optional(object({
-      protocol          = string
-      port              = number
-      protocol_version  = string
-      health_check_path = string
-      status_code       = optional(string)
-    }))
-    base = optional(bool)
-  }))
-  nullable = false
-}
-
 variable "bucket_env" {
   type = object({
     name     = string
@@ -94,6 +75,20 @@ variable "ecs" {
               tag = string
             }))
           })
+          traffics = optional(list(object({
+            listener = object({
+              protocol         = string
+              port             = number
+              protocol_version = string
+            })
+            target = object({
+              protocol          = string
+              port              = number
+              protocol_version  = string
+              health_check_path = string
+              status_code       = optional(string)
+            })
+          })))
           command                  = optional(list(string), [])
           entrypoint               = optional(list(string), [])
           readonly_root_filesystem = optional(bool)

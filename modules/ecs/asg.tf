@@ -50,7 +50,7 @@ module "asg" {
   user_data_base64         = base64encode(local.user_data[each.value.capacity.type])
   port_mapping             = "dynamic"
   layer7_to_layer4_mapping = local.layer7_to_layer4_mapping
-  traffics                 = var.traffics
+  traffics                 = local.traffics
   target_group_arns        = module.elb.target_group.arns
   source_security_group_id = module.elb.security_group.id
 

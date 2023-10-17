@@ -48,65 +48,10 @@ variable "bucket_env" {
   default = null
 }
 
-variable "traffics" {
-  description = "It contains the networking configuration. Only one element can be the base, the base is necessary only if there are more than one element, the target configuration matters only for the base. The default `protocol_version` is HTTP1."
-
-  type = list(object({
-    listener = object({
-      protocol         = string
-      port             = optional(number)
-      protocol_version = optional(string)
-    })
-    target = optional(object({
-      protocol          = optional(string)
-      port              = number
-      protocol_version  = optional(string)
-      health_check_path = optional(string)
-      status_code       = optional(string)
-    }))
-    base = optional(bool)
-  }))
-  nullable = false
-
-  # traffic
-  validation {
-    condition     = length(var.traffics) > 0
-    error_message = "traffic must have at least one element"
-  }
-  validation {
-    condition     = length([for traffic in var.traffics : traffic.base if traffic.base == true || length(var.traffics) == 1]) == 1
-    error_message = "traffics must have exactly one base or only one element (base not required)"
-  }
-  validation {
-    condition     = length(distinct([for traffic in var.traffics : { listener = traffic.listener, target = traffic.target }])) == length(var.traffics)
-    error_message = "traffics elements cannot be similar"
-  }
-
-  # traffic listeners
-  validation {
-    condition     = alltrue([for traffic in var.traffics : contains(["http", "https", "tcp"], traffic.listener.protocol)])
-    error_message = "Listener protocol must be one of [http, https, tcp]"
-  }
-  validation {
-    condition     = alltrue([for traffic in var.traffics : traffic.listener.protocol_version != null ? contains(["http1", "http2", "grpc"], traffic.listener.protocol_version) : true])
-    error_message = "Listener protocol version must be one of [http1, http2, grpc] or null"
-  }
-
-  # traffic targets
-  validation {
-    condition     = alltrue([for traffic in var.traffics : contains(["http", "https", "tcp"], traffic.target.protocol) if try(traffic.target.protocol != null, traffic.target != null)])
-    error_message = "Target protocol must be one of [http, https, tcp]"
-  }
-  validation {
-    condition     = alltrue([for traffic in var.traffics : contains(["http1", "http2", "grpc"], traffic.target.protocol_version) if try(traffic.target.protocol_version != null, traffic.target != null)])
-    error_message = "Target protocol version must be one of [http1, http2, grpc] or null"
-  }
-}
-
 resource "null_resource" "acm" {
   lifecycle {
     precondition {
-      condition     = anytrue([for traffic in var.traffics : traffic.listener.protocol == "https"]) ? var.route53 != null : true
+      condition     = anytrue(flatten([for container in var.orchestrator.group.deployment.containers : [for traffic in container.traffics : traffic.listener.protocol == "https"]])) ? var.route53 != null : true
       error_message = "if https is used, route53 cannot be null"
     }
   }
@@ -153,6 +98,20 @@ variable "orchestrator" {
               tag = string
             }))
           })
+          traffics = optional(list(object({
+            listener = object({
+              protocol         = string
+              port             = optional(number)
+              protocol_version = optional(string)
+            })
+            target = object({
+              protocol          = optional(string)
+              port              = number
+              protocol_version  = optional(string)
+              health_check_path = optional(string)
+              status_code       = optional(string)
+            })
+          })))
           command                  = optional(list(string), [])
           entrypoint               = optional(list(string), [])
           readonly_root_filesystem = optional(bool)
@@ -232,6 +191,26 @@ variable "orchestrator" {
   validation {
     condition     = length(compact([for container in var.orchestrator.group.deployment.containers : container.base])) == 1 || length(var.orchestrator.group.deployment.containers) == 1
     error_message = "containers must have one base or be unique"
+  }
+
+  # container traffic listeners
+  validation {
+    condition     = alltrue(flatten([for container in var.orchestrator.group.deployment.containers : [for traffic in container.traffics : contains(["http", "https", "tcp"], traffic.listener.protocol)]]))
+    error_message = "Listener protocol must be one of [http, https, tcp]"
+  }
+  validation {
+    condition     = alltrue(flatten([for container in var.orchestrator.group.deployment.containers : [for traffic in container.traffics : traffic.listener.protocol_version != null ? contains(["http1", "http2", "grpc"], traffic.listener.protocol_version) : true]]))
+    error_message = "Listener protocol version must be one of [http1, http2, grpc] or null"
+  }
+
+  # container traffic targets
+  validation {
+    condition     = alltrue(flatten([for container in var.orchestrator.group.deployment.containers : [for traffic in container.traffics : contains(["http", "https", "tcp"], traffic.target.protocol) if try(traffic.target.protocol != null, traffic.target != null)]]))
+    error_message = "Target protocol must be one of [http, https, tcp]"
+  }
+  validation {
+    condition     = alltrue(flatten([for container in var.orchestrator.group.deployment.containers : [for traffic in container.traffics : contains(["http1", "http2", "grpc"], traffic.target.protocol_version) if try(traffic.target.protocol_version != null, traffic.target != null)]]))
+    error_message = "Target protocol version must be one of [http1, http2, grpc] or null"
   }
 
   # fargate
