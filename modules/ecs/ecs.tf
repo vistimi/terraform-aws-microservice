@@ -3,6 +3,23 @@ locals {
     ON_DEMAND = "FARGATE"
     SPOT      = "FARGATE_SPOT"
   }
+
+  container_targets = {
+    for container in var.ecs.service.task.containers : container.name => distinct(flatten([for traffic in container.traffics : {
+      port             = traffic.target.port
+      protocol         = traffic.target.protocol
+      protocol_version = traffic.target.protocol_version
+    }]))
+  }
+}
+
+resource "null_resource" "container_targets" {
+  lifecycle {
+    precondition {
+      condition     = alltrue([for container in local.container_targets : length([for target in container : target.port]) == length(distinct([for target in container : target.port]))])
+      error_message = "Multiple tragets with the same port is used (make sure that all traffics points toward same protocol and protocol version): ${jsonencode(local.container_targets)}"
+    }
+  }
 }
 
 module "ecs" {
@@ -88,17 +105,26 @@ module "ecs" {
       # security group
       subnet_ids = var.vpc.subnet_tier_ids
       security_group_rules = merge(
+        # {
+        #   # keys need to be known at build time
+        #   //FIXME:
+        #   for target in local.targets : join("-", ["elb", "ingress", target.protocol, target.port]) => {
+        #     type                     = "ingress"
+        #     from_port                = target.port
+        #     to_port                  = target.port
+        #     protocol                 = local.layer7_to_layer4_mapping[target.protocol]
+        #     description              = "Service ${target.protocol} port ${target.port}"
+        #     source_security_group_id = module.elb.security_group.id
+        #   }
+        # },
         {
-          # keys need to be known at build time
-          for target in distinct(flatten([for container in var.ecs.service.task.containers : [for traffic in container.traffics : {
-            port     = traffic.target.port
-            protocol = traffic.target.protocol
-            }]])) : join("-", ["elb", "ingress", target.protocol, target.port]) => {
+          ingress_all = {
             type                     = "ingress"
-            from_port                = target.port
-            to_port                  = target.port
-            protocol                 = local.layer7_to_layer4_mapping[target.protocol]
-            description              = "Service ${target.protocol} port ${target.port}"
+            from_port                = 0
+            to_port                  = 0
+            protocol                 = "-1"
+            cidr_blocks              = ["0.0.0.0/0"]
+            description              = "Allow all traffic from ELB"
             source_security_group_id = module.elb.security_group.id
           }
         },
@@ -111,7 +137,8 @@ module "ecs" {
             cidr_blocks = ["0.0.0.0/0"]
             description = "Allow all traffic"
           }
-      })
+        }
+      )
 
       #---------------------
       # Task definition
@@ -258,17 +285,13 @@ module "ecs" {
           environment = container.environments,
 
           # https://docs.aws.amazon.com/AmazonECS/latest/APIReference/API_PortMapping.html
-          port_mappings = distinct([for target in distinct(flatten([for container in var.ecs.service.task.containers : [for traffic in container.traffics : {
-            port             = traffic.target.port
-            protocol         = traffic.target.protocol
-            protocol_version = traffic.target.protocol_version
-            }]])) : {
+          port_mappings = [for target in local.container_targets[container.name] : {
             containerPort = target.port
             hostPort      = var.ecs.service.ec2 != null ? 0 : target.port // "host" network can use target port 
             name          = join("-", ["container", target.protocol, target.port])
             protocol      = target.protocol_version == "grpc" ? "tcp" : target.protocol // TODO: local.layer7_to_layer4_mapping[target.protocol]
             }
-          ])
+          ]
           cpu                = container.cpu
           memory             = container.memory
           memory_reservation = container.memory

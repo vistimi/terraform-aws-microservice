@@ -104,7 +104,7 @@ module "elb_sg" {
   version = "5.0.0"
 
   name        = "${var.name}-sg-elb"
-  description = "Security group for ALB within VPC"
+  description = "Security group for ELB"
   vpc_id      = var.vpc.id
 
   ingress_with_cidr_blocks = [

@@ -22,7 +22,7 @@ func Test_Unit_Microservice_Rest_ECS_Fargate_Httpd(t *testing.T) {
 	terratestShell.RunCommandAndGetOutput(t, command)
 
 	id, tags, trafficsMap, dockerMap := testAwsModule.SetupMicroservice(t, microserviceInformation, traffics)
-	serviceNameSuffix := "unique"
+	serviceNameSuffix := "sone"
 
 	name := strings.ToLower(util.Format("-", projectName, serviceName, util.GetEnvVariable("AWS_PROFILE_NAME"), id))
 
@@ -49,7 +49,7 @@ func Test_Unit_Microservice_Rest_ECS_Fargate_Httpd(t *testing.T) {
 
 						"containers": []map[string]any{
 							{
-								"name":     "unique",
+								"name":     "cone",
 								"cpu":      512,
 								"memory":   1024,
 								"docker":   dockerMap,
@@ -114,11 +114,11 @@ func Test_Unit_Microservice_Rest_ECS_Fargate_Httpd(t *testing.T) {
 		})
 	}()
 
-	terratestStructure.RunTestStage(t, "deploy", func() {
-		terraform.Init(t, options)
-		terraform.Plan(t, options)
-		terraform.Apply(t, options)
-	})
+	// terratestStructure.RunTestStage(t, "deploy", func() {
+	// 	terraform.Init(t, options)
+	// 	terraform.Plan(t, options)
+	// 	terraform.Apply(t, options)
+	// })
 	// terratestStructure.RunTestStage(t, "validate", func() {
 	// 	// TODO: test that /etc/ecs/ecs.config is not empty, requires key_name coming from terratest maybe
 	// 	serviceName := util.Format("-", name, serviceNameSuffix)

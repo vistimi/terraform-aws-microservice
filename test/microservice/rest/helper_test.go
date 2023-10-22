@@ -52,7 +52,8 @@ var (
 				Protocol: util.Ptr("https"),
 			},
 			Target: util.Ptr(testAwsModule.TrafficPoint{
-				Port: util.Ptr(80),
+				Port:     util.Ptr(80),
+				Protocol: util.Ptr("http"),
 			}),
 		},
 	}

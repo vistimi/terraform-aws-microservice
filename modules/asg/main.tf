@@ -234,7 +234,7 @@ module "autoscaling_sg" {
     from_port                = var.port_mapping == "dynamic" ? 32768 : target.port
     to_port                  = var.port_mapping == "dynamic" ? 65535 : target.port
     protocol                 = var.layer7_to_layer4_mapping[target.protocol]
-    description              = join(" ", ["Load", "Balancer", target.protocol, var.port_mapping == "dynamic" ? 32768 : target.port, "-", var.port_mapping == "dynamic" ? 65535 : target.port])
+    description              = join(" ", ["Security group for ASG", target.protocol, var.port_mapping == "dynamic" ? 32768 : target.port, "-", var.port_mapping == "dynamic" ? 65535 : target.port])
     source_security_group_id = var.source_security_group_id
     }
   ]
