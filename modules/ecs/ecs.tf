@@ -24,7 +24,7 @@ resource "null_resource" "container_targets" {
 
 module "ecs" {
   source  = "terraform-aws-modules/ecs/aws"
-  version = "5.2.0"
+  version = "5.2.2"
 
   cluster_name = var.name
 
@@ -138,6 +138,10 @@ module "ecs" {
           }
         }
       )
+
+      create_iam_role     = false
+      iam_role_tags       = var.tags
+      iam_role_statements = {}
 
       #---------------------
       # Task definition
