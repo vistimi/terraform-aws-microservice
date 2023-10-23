@@ -275,9 +275,9 @@ jobs:
 
           func_gh_event_to_ecr () {
             # create/push/delete
-            if [[ "${{ github.event_name }}" == "create" || ("${{ github.event_name }}" == "workflow_dispatch" && "${{ inputs.event_name }}" == "create") || "${{ github.event_name }}" == "pull_request" && "${{ github.event.pull_request.state }}" == "open" ]]; then
+            if [[ "${{ github.event_name }}" == "create" || ("${{ github.event_name }}" == "workflow_dispatch" && "${{ inputs.event_name }}" == "create") ]]; then
               func_ecr_create_repository
-            elif [[ "${{ github.event_name }}" == "push" || ("${{ github.event_name }}" == "workflow_dispatch" && "${{ inputs.event_name }}" == "push") ]]; then
+            elif [[ "${{ github.event_name }}" == "push" || ("${{ github.event_name }}" == "workflow_dispatch" && "${{ inputs.event_name }}" == "push") || "${{ github.event_name }}" == "pull_request" && "${{ github.event.pull_request.state }}" == "open" ]]; then
               func_ecr_push_image
             elif [[ "${{ github.event_name }}" == "delete" || ("${{ github.event_name }}" == "workflow_dispatch" && "${{ inputs.event_name }}" == "delete") || "${{ github.event_name }}" == "pull_request" && "${{ github.event.pull_request.state }}" == "closed" ]]; then
               echo -e '\033[43mDeleting repository in ECR\033[0m'
