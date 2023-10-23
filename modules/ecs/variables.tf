@@ -114,12 +114,14 @@ variable "ecs" {
           instance_refresh = object({
             strategy = string
             preferences = optional(object({
-              checkpoint_delay       = optional(number)
-              checkpoint_percentages = optional(list(number))
-              instance_warmup        = optional(number)
-              min_healthy_percentage = optional(number)
-              skip_matching          = optional(bool)
-              auto_rollback          = optional(bool)
+              checkpoint_delay             = optional(number)
+              checkpoint_percentages       = optional(list(number))
+              instance_warmup              = optional(number)
+              min_healthy_percentage       = optional(number)
+              skip_matching                = optional(bool)
+              auto_rollback                = optional(bool)
+              scale_in_protected_instances = optional(string)
+              standby_instances            = optional(string)
             }))
             triggers = optional(list(string))
           })
@@ -127,8 +129,12 @@ variable "ecs" {
           instance_refresh = {
             strategy = "Rolling"
             preferences = {
-              min_healthy_percentage = 66
+              min_healthy_percentage       = 66
+              auto_rollback                = true
+              scale_in_protected_instances = "Refresh"
+              standby_instances            = "Terminate"
             }
+            triggers = ["tag"]
           }
         })
         capacities = optional(list(object({

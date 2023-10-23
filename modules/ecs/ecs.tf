@@ -302,32 +302,6 @@ module "ecs" {
             "value" : "${length(container.device_idxs)}"
           }] : []
 
-          # command = flatten(concat([
-          #   for mount_point in container.mount_points :
-          #   [
-          #     "yum install -y gcc libstdc+-devel gcc-c+ fuse fuse-devel curl-devel libxml2-devel mailcap automake openssl-devel git gcc-c++",
-          #     "git clone https://github.com/s3fs-fuse/s3fs-fuse",
-          #     "cd s3fs-fuse/",
-          #     "./autogen.sh",
-          #     "./configure --prefix=/usr --with-openssl",
-          #     "make",
-          #     "make install",
-          #     "docker plugin install rexray/s3fs:latest S3FS_REGION=${local.region_name} S3FS_OPTIONS=\"allow_other,iam_role=auto,umask=000\" LIBSTORAGE_INT,EGRATION_VOLUME_OPERATIONS_MOUNT_ROOTPATH=/ --grant-all-permissions",
-          #     "yum update -y ecs-init",
-          #     "service docker restart && start ecs",
-          #   ] if mount_point.s3 != null
-          #   ],
-          #   container.command
-          # ))
-          # entrypoint = flatten(concat([
-          #   for mount_point in container.mount_points :
-          #   [
-          #     "/bin/bash",
-          #     "-c",
-          #   ] if mount_point.s3 != null
-          #   ],
-          #   container.entrypoint
-          # ))
           command                  = container.command
           entrypoint               = container.entrypoint
           readonly_root_filesystem = container.readonly_root_filesystem

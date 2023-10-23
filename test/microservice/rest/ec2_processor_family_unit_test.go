@@ -50,8 +50,9 @@ func Test_Unit_Microservice_Rest_ECS_EC2_ProcessorFamily_None(t *testing.T) {
 
 						"containers": []map[string]any{
 							{
-								"name":   "unique",
-								"docker": dockerMap,
+								"name":     "unique",
+								"docker":   dockerMap,
+								"traffics": trafficsMap,
 								"entrypoint": []string{
 									"/bin/bash",
 									"-c",
@@ -80,8 +81,6 @@ func Test_Unit_Microservice_Rest_ECS_EC2_ProcessorFamily_None(t *testing.T) {
 				},
 				"ecs": map[string]any{},
 			},
-
-			"traffics": trafficsMap,
 
 			"tags": tags,
 		},
@@ -136,8 +135,9 @@ func Test_Unit_Microservice_Rest_ECS_EC2_ProcessorFamily_AMD(t *testing.T) {
 
 						"containers": []map[string]any{
 							{
-								"name":   "unique",
-								"docker": dockerMap,
+								"name":     "unique",
+								"docker":   dockerMap,
+								"traffics": trafficsMap,
 								"entrypoint": []string{
 									"/bin/bash",
 									"-c",
@@ -166,8 +166,6 @@ func Test_Unit_Microservice_Rest_ECS_EC2_ProcessorFamily_AMD(t *testing.T) {
 				},
 				"ecs": map[string]any{},
 			},
-
-			"traffics": trafficsMap,
 
 			"tags": tags,
 		},
@@ -222,8 +220,9 @@ func Test_Unit_Microservice_Rest_ECS_EC2_ProcessorFamily_Intel(t *testing.T) {
 
 						"containers": []map[string]any{
 							{
-								"name":   "unique",
-								"docker": dockerMap,
+								"name":     "unique",
+								"docker":   dockerMap,
+								"traffics": trafficsMap,
 								"entrypoint": []string{
 									"/bin/bash",
 									"-c",
@@ -252,8 +251,6 @@ func Test_Unit_Microservice_Rest_ECS_EC2_ProcessorFamily_Intel(t *testing.T) {
 				},
 				"ecs": map[string]any{},
 			},
-
-			"traffics": trafficsMap,
 
 			"tags": tags,
 		},
@@ -308,8 +305,9 @@ func Test_Unit_Microservice_Rest_ECS_EC2_ProcessorFamily_AwsGraviton(t *testing.
 
 						"containers": []map[string]any{
 							{
-								"name":   "unique",
-								"docker": dockerMap,
+								"name":     "unique",
+								"docker":   dockerMap,
+								"traffics": trafficsMap,
 								"entrypoint": []string{
 									"/bin/bash",
 									"-c",
@@ -338,8 +336,6 @@ func Test_Unit_Microservice_Rest_ECS_EC2_ProcessorFamily_AwsGraviton(t *testing.
 				},
 				"ecs": map[string]any{},
 			},
-
-			"traffics": trafficsMap,
 
 			"tags": tags,
 		},
