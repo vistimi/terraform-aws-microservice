@@ -19,7 +19,7 @@ on:
     branches-ignore: [dependabot/**, infrabot/**]
     paths: [Dockerfile*, '**/Dockerfile*']
   pull_request:
-    types: [opened, reopened]
+    types: [opened, reopened, closed]
   delete:
 
 env:
@@ -275,11 +275,11 @@ jobs:
 
           func_gh_event_to_ecr () {
             # create/push/delete
-            if [[ "${{ github.event_name }}" == "create" || ("${{ github.event_name }}" == "workflow_dispatch" && "${{ inputs.event_name }}" == "create") || "${{ github.event_name }}" == "pull_request" ]]; then
+            if [[ "${{ github.event_name }}" == "create" || ("${{ github.event_name }}" == "workflow_dispatch" && "${{ inputs.event_name }}" == "create") || "${{ github.event_name }}" == "pull_request" && ("${{ github.event.pull_request.action }}" == "opened" || "${{ github.event.pull_request.action }}" == "reopened") ]]; then
               func_ecr_create_repository
             elif [[ "${{ github.event_name }}" == "push" || ("${{ github.event_name }}" == "workflow_dispatch" && "${{ inputs.event_name }}" == "push") ]]; then
               func_ecr_push_image
-            elif [[ "${{ github.event_name }}" == "delete" || ("${{ github.event_name }}" == "workflow_dispatch" && "${{ inputs.event_name }}" == "delete") ]]; then
+            elif [[ "${{ github.event_name }}" == "delete" || ("${{ github.event_name }}" == "workflow_dispatch" && "${{ inputs.event_name }}" == "delete") || "${{ github.event_name }}" == "pull_request" && "${{ github.event.pull_request.action }}" == "closed" ]]; then
               echo -e '\033[43mDeleting repository in ECR\033[0m'
               aws $AWS_CLI_SERVICE delete-repository --repository-name $ECR_REPOSITORY_NAME --force
             else
