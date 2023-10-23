@@ -54,13 +54,14 @@ jobs:
 
           if [[ $ECR_PRIVACY == private ]]; then
             echo "ECR_LOGIN_PASSWORD=$(aws ecr get-login-password --region ${{ vars.AWS_REGION_NAME }})" >> $GITHUB_OUTPUT
-            echo "ECR_REGISTRY_URI=$ECR_REGISTRY_PRIVATE_URI" >> $GITHUB_OUTPUT
-            echo using docker image::: $ECR_REGISTRY_PUBLIC_URI/$ECR_REPOSITORY_NAME$ECR_REPOSITORY_EXTENSION:$IMAGE_TAG
+            ECR_REGISTRY_URI=$ECR_REGISTRY_PRIVATE_URI
           elif [[ $ECR_PRIVACY == public ]]; then
             echo "ECR_LOGIN_PASSWORD=$(aws ecr-public get-login-password --region us-east-1)" >> $GITHUB_OUTPUT
-            echo "ECR_REGISTRY_URI=$ECR_REGISTRY_PUBLIC_URI" >> $GITHUB_OUTPUT
-            echo using docker image::: $ECR_REGISTRY_PUBLIC_URI/$ECR_REPOSITORY_NAME$ECR_REPOSITORY_EXTENSION:$IMAGE_TAG
+            ECR_REGISTRY_URI=$ECR_REGISTRY_PUBLIC_URI            
           fi
+
+          echo "ECR_REGISTRY_URI=$ECR_REGISTRY_URI" >> $GITHUB_OUTPUT
+          echo using docker image::: $ECR_REGISTRY_URI/$ECR_REPOSITORY_NAME$ECR_REPOSITORY_EXTENSION:$IMAGE_TAG
 
   test:
     needs: [setup]
@@ -94,7 +95,6 @@ jobs:
       - name: Versions
         run: |
           terraform --version
-          terragrunt --version
       - name: Setup AWS CLI
         id: setup
         run: |
