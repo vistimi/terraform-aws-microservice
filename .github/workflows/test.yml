@@ -101,10 +101,12 @@ jobs:
       - name: Setup Test
         run: |
           make -f test/Makefile prepare
+      - name: Run Test
+        run: |
+          cd test
+          go mod download
 
-          cd test; go mod download; cd ..
-
-          ABS_TEST_DIR_NAME=./test/microservice/${{ matrix.dir_name }}
+          ABS_TEST_DIR_NAME=./microservice/${{ matrix.dir_name }}
 
           # test and clean
           go test -timeout 60m -p 1 -v -cover $ABS_TEST_DIR_NAME
