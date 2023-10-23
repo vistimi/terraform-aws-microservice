@@ -96,12 +96,11 @@ jobs:
         run: |
           terraform --version
       - name: Setup AWS CLI
-        id: setup
         run: |
-          make -f Makefile aws-auth
+          make -f test/Makefile aws-auth
       - name: Setup Test
         run: |
-          make -f Makefile prepare
+          make -f test/Makefile prepare
 
           ABS_TEST_DIR_NAME=./test/microservice/${{ matrix.dir_name }}
 
