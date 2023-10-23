@@ -29,25 +29,6 @@ variable "route53" {
   default = null
 }
 
-variable "traffics" {
-  type = list(object({
-    listener = object({
-      protocol         = string
-      port             = number
-      protocol_version = string
-    })
-    target = optional(object({
-      protocol          = string
-      port              = number
-      protocol_version  = string
-      health_check_path = string
-      status_code       = optional(string)
-    }))
-    base = optional(bool)
-  }))
-  nullable = false
-}
-
 variable "bucket_env" {
   type = object({
     name     = string
@@ -94,6 +75,20 @@ variable "ecs" {
               tag = string
             }))
           })
+          traffics = optional(list(object({
+            listener = object({
+              protocol         = string
+              port             = number
+              protocol_version = string
+            })
+            target = object({
+              protocol          = string
+              port              = number
+              protocol_version  = string
+              health_check_path = string
+              status_code       = optional(string)
+            })
+          })))
           command                  = optional(list(string), [])
           entrypoint               = optional(list(string), [])
           readonly_root_filesystem = optional(bool)
@@ -119,12 +114,14 @@ variable "ecs" {
           instance_refresh = object({
             strategy = string
             preferences = optional(object({
-              checkpoint_delay       = optional(number)
-              checkpoint_percentages = optional(list(number))
-              instance_warmup        = optional(number)
-              min_healthy_percentage = optional(number)
-              skip_matching          = optional(bool)
-              auto_rollback          = optional(bool)
+              checkpoint_delay             = optional(number)
+              checkpoint_percentages       = optional(list(number))
+              instance_warmup              = optional(number)
+              min_healthy_percentage       = optional(number)
+              skip_matching                = optional(bool)
+              auto_rollback                = optional(bool)
+              scale_in_protected_instances = optional(string)
+              standby_instances            = optional(string)
             }))
             triggers = optional(list(string))
           })
@@ -132,8 +129,12 @@ variable "ecs" {
           instance_refresh = {
             strategy = "Rolling"
             preferences = {
-              min_healthy_percentage = 66
+              min_healthy_percentage       = 66
+              auto_rollback                = true
+              scale_in_protected_instances = "Refresh"
+              standby_instances            = "Terminate"
             }
+            triggers = ["tag"]
           }
         })
         capacities = optional(list(object({

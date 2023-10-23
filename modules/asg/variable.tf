@@ -102,14 +102,13 @@ variable "traffics" {
       port             = number
       protocol_version = string
     })
-    target = optional(object({
+    target = object({
       protocol          = string
       port              = number
       protocol_version  = string
       health_check_path = string
       status_code       = optional(string)
-    }))
-    base = optional(bool)
+    })
   }))
   nullable = false
 }

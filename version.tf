@@ -8,6 +8,8 @@ terraform {
       source  = "hashicorp/null"
       version = ">= 3.2.0"
     }
+
+    # Kubernetes versions
     # kubectl = {
     #   source  = "gavinbunney/kubectl"
     #   version = "= 1.14.0"

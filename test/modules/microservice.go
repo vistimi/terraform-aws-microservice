@@ -30,9 +30,8 @@ type EC2Instance struct {
 }
 
 type MicroserviceInformation struct {
-	Branch          string
-	HealthCheckPath string
-	Docker          Docker
+	Branch string
+	Docker Docker
 }
 type Docker struct {
 	Registry   *Registry
@@ -59,7 +58,7 @@ type Image struct {
 type EndpointTest struct {
 	Command             *string // replaced `<URL>` occurences by the real URL
 	Request             *string
-	Path                string
+	Path                *string
 	ExpectedStatus      int
 	ExpectedBody        *string
 	MaxRetries          *int
@@ -82,6 +81,7 @@ type TrafficPoint struct {
 	Protocol        *string
 	ProtocolVersion *string
 	StatusCode      *string
+	HealthCheckPath *string
 }
 
 type Traffic struct {
@@ -104,11 +104,11 @@ func SetupMicroservice(t *testing.T, microserviceInformation MicroserviceInforma
 	for _, traffic := range traffics {
 		target := make(map[string]any)
 		if traffic.Target != nil {
-			target["health_check_path"] = microserviceInformation.HealthCheckPath
 			target = util.ObjNil(traffic.Target.Protocol, target, "protocol")
 			target = util.ObjNil(traffic.Target.Port, target, "port")
 			target = util.ObjNil(traffic.Target.ProtocolVersion, target, "protocol_version")
 			target = util.ObjNil(traffic.Target.StatusCode, target, "status_code")
+			target = util.ObjNil(traffic.Target.HealthCheckPath, target, "health_check_path")
 		}
 
 		listener := map[string]any{}
@@ -196,7 +196,11 @@ func ValidateRestEndpoints(t *testing.T, microservicePath string, deployment Dep
 						re := regexp.MustCompile(`<URL>`)
 						newEndpoint.Command = util.Ptr(re.ReplaceAllString(util.Value(endpoint.Command), elbDnsUrl))
 					} else {
-						newEndpoint.Path = elbDnsUrl + endpoint.Path
+						healthCheckPath := "/"
+						if traffic.Target.HealthCheckPath != nil {
+							healthCheckPath = *traffic.Target.HealthCheckPath
+						}
+						newEndpoint.Path = util.Ptr(elbDnsUrl + healthCheckPath)
 					}
 					endpointsLoadBalancer = append(endpointsLoadBalancer, newEndpoint)
 				}
@@ -226,7 +230,11 @@ func ValidateRestEndpoints(t *testing.T, microservicePath string, deployment Dep
 							re := regexp.MustCompile(`<URL>`)
 							newEndpoint.Command = util.Ptr(re.ReplaceAllString(util.Value(endpoint.Command), route53DnsUrl))
 						} else {
-							newEndpoint.Path = route53DnsUrl + endpoint.Path
+							healthCheckPath := "/"
+							if traffic.Target.HealthCheckPath != nil {
+								healthCheckPath = *traffic.Target.HealthCheckPath
+							}
+							newEndpoint.Path = util.Ptr(route53DnsUrl + healthCheckPath)
 						}
 						endpointsRoute53 = append(endpointsRoute53, newEndpoint)
 					}
@@ -248,7 +256,7 @@ func TestRestEndpoints(t *testing.T, endpoints []EndpointTest) {
 	tlsConfig := tls.Config{}
 	for _, endpoint := range endpoints {
 		path := endpoint.Path
-		options := terratest_http_helper.HttpGetOptions{Url: path, TlsConfig: &tlsConfig, Timeout: 10}
+		options := terratest_http_helper.HttpGetOptions{Url: *path, TlsConfig: &tlsConfig, Timeout: 10}
 		expectedBody := ""
 		if endpoint.ExpectedBody != nil {
 			expectedBody = *endpoint.ExpectedBody
@@ -361,7 +369,7 @@ func TestGrpcEndpoints(t *testing.T, endpoints []EndpointTest, address string) {
 					t.Fatalf(`'Command' unsuccessful after %d retries`, maxRetries)
 				}
 			} else {
-				paths := strings.Split(strings.TrimPrefix(endpoint.Path, "/"), "/")
+				paths := strings.Split(strings.TrimPrefix(*endpoint.Path, "/"), "/")
 				service := paths[0]
 				method := paths[1]
 

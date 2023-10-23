@@ -55,18 +55,12 @@ jobs:
           if [[ $ECR_PRIVACY == private ]]; then
             echo "ECR_LOGIN_PASSWORD=$(aws ecr get-login-password --region ${{ vars.AWS_REGION_NAME }})" >> $GITHUB_OUTPUT
             echo "ECR_REGISTRY_URI=$ECR_REGISTRY_PRIVATE_URI" >> $GITHUB_OUTPUT
-            
-            echo ${{ needs.setup.outputs.ECR_LOGIN_PASSWORD }} | docker login --username AWS --password-stdin ${{ needs.setup.outputs.ECR_REGISTRY_URI }}
-
-            aws ecr batch-get-image \
-              --registry-id ${{ vars.AWS_ACCOUNT_ID }} \
-              --region ${{ vars.AWS_REGION_NAME }} \
-              --repository-name ${{ needs.setup.outputs.ECR_REPOSITORY_NAME}}${{ needs.setup.outputs.ECR_REPOSITORY_EXTENSION }} \
-              --image-ids imageTag=${{ needs.setup.outputs.IMAGE_TAG }}
+            echo using docker image::: $ECR_REGISTRY_PUBLIC_URI/$ECR_REPOSITORY_NAME$ECR_REPOSITORY_EXTENSION:$IMAGE_TAG
           elif [[ $ECR_PRIVACY == public ]]; then
             echo "ECR_LOGIN_PASSWORD=$(aws ecr-public get-login-password --region us-east-1)" >> $GITHUB_OUTPUT
-            echo "ECR_REGISTRY_URI=$ECR_REGISTRY_PUBLIC_URI" >> $GITHUB_OUTPUT  
-          fi          
+            echo "ECR_REGISTRY_URI=$ECR_REGISTRY_PUBLIC_URI" >> $GITHUB_OUTPUT
+            echo using docker image::: $ECR_REGISTRY_PUBLIC_URI/$ECR_REPOSITORY_NAME$ECR_REPOSITORY_EXTENSION:$IMAGE_TAG
+          fi
 
   test:
     needs: [setup]

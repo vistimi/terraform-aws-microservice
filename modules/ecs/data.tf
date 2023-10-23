@@ -32,4 +32,20 @@ locals {
     x86_64 = "X86_64"
     arm64  = "ARM64"
   }
+
+  traffics = flatten([for container in var.ecs.service.task.containers : container.traffics])
+
+  unique_targets = distinct(flatten([for container in var.ecs.service.task.containers : [for traffic in container.traffics : {
+    port              = traffic.target.port
+    protocol          = traffic.target.protocol
+    protocol_version  = traffic.target.protocol_version
+    health_check_path = traffic.target.health_check_path
+    status_code       = traffic.target.status_code
+  }]]))
+
+  unique_listeners = distinct(flatten([for container in var.ecs.service.task.containers : [for traffic in container.traffics : {
+    protocol         = traffic.listener.protocol
+    port             = traffic.listener.port
+    protocol_version = traffic.listener.protocol_version
+  }]]))
 }

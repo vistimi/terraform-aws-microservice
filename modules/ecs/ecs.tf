@@ -3,11 +3,28 @@ locals {
     ON_DEMAND = "FARGATE"
     SPOT      = "FARGATE_SPOT"
   }
+
+  container_targets = {
+    for container in var.ecs.service.task.containers : container.name => distinct(flatten([for traffic in container.traffics : {
+      port             = traffic.target.port
+      protocol         = traffic.target.protocol
+      protocol_version = traffic.target.protocol_version
+    }]))
+  }
+}
+
+resource "null_resource" "container_targets" {
+  lifecycle {
+    precondition {
+      condition     = alltrue([for container in local.container_targets : length([for target in container : target.port]) == length(distinct([for target in container : target.port]))])
+      error_message = "Multiple tragets with the same port is used (make sure that all traffics points toward same protocol and protocol version): ${jsonencode(local.container_targets)}"
+    }
+  }
 }
 
 module "ecs" {
   source  = "terraform-aws-modules/ecs/aws"
-  version = "5.2.0"
+  version = "5.2.2"
 
   cluster_name = var.name
 
@@ -66,28 +83,47 @@ module "ecs" {
       subnets          = var.ecs.service.ec2 != null ? null : var.vpc.subnet_tier_ids
       assign_public_ip = var.ecs.service.ec2 != null ? null : true // if private subnets, use NAT
 
-      load_balancer = {
-        # TODO: this-service
-        service = {
-          target_group_arn = element(module.elb.target_group.arns, 0) // one LB per target group
-          container_name   = length(var.ecs.service.task.containers) == 1 ? "${var.name}-${var.ecs.service.task.containers[0].name}" : [for container in var.ecs.service.task.containers : "${var.name}-${container.name}" if container.base == true][0]
-          container_port   = element([for traffic in var.traffics : traffic.target.port if traffic.base == true || length(var.traffics) == 1], 0)
-        }
-      }
+      load_balancer = merge(
+        # keys need to be known at build time
+        [
+          for container in var.ecs.service.task.containers : {
+            for traffic in container.traffics :
+            join("-", [var.name, container.name, traffic.listener.protocol, traffic.listener.port, "to", traffic.target.protocol, traffic.target.port]) => {
+              target_group_arn = module.elb.target_group.arns[
+                [for index, target in distinct(flatten([for container in var.ecs.service.task.containers : [for traffic in container.traffics : {
+                  port = traffic.target.port
+                }]])) : index if target.port == traffic.target.port][0]
+              ]
+              container_name = "${var.name}-${container.name}"
+              container_port = traffic.target.port
+            }
+          }
+        ]...
+      )
+
 
       # security group
       subnet_ids = var.vpc.subnet_tier_ids
       security_group_rules = merge(
+        # {
+        #   # keys need to be known at build time
+        #   //FIXME:
+        #   for target in local.targets : join("-", ["elb", "ingress", target.protocol, target.port]) => {
+        #     type                     = "ingress"
+        #     from_port                = target.port
+        #     to_port                  = target.port
+        #     protocol                 = local.layer7_to_layer4_mapping[target.protocol]
+        #     description              = "Service ${target.protocol} port ${target.port}"
+        #     source_security_group_id = module.elb.security_group.id
+        #   }
+        # },
         {
-          for target in distinct([for traffic in var.traffics : {
-            port     = traffic.target.port
-            protocol = traffic.target.protocol
-            }]) : join("-", ["elb", "ingress", target.protocol, target.port]) => {
+          ingress_all = {
             type                     = "ingress"
-            from_port                = target.port
-            to_port                  = target.port
-            protocol                 = local.layer7_to_layer4_mapping[target.protocol]
-            description              = "Service ${target.protocol} port ${target.port}"
+            from_port                = 0
+            to_port                  = 0
+            protocol                 = "-1"
+            description              = "Allow all traffic from ELB"
             source_security_group_id = module.elb.security_group.id
           }
         },
@@ -100,7 +136,12 @@ module "ecs" {
             cidr_blocks = ["0.0.0.0/0"]
             description = "Allow all traffic"
           }
-      })
+        }
+      )
+
+      create_iam_role     = false
+      iam_role_tags       = var.tags
+      iam_role_statements = {}
 
       #---------------------
       # Task definition
@@ -247,11 +288,7 @@ module "ecs" {
           environment = container.environments,
 
           # https://docs.aws.amazon.com/AmazonECS/latest/APIReference/API_PortMapping.html
-          port_mappings = [for target in distinct([for traffic in var.traffics : {
-            port             = traffic.target.port
-            protocol         = traffic.target.protocol
-            protocol_version = traffic.target.protocol_version
-            }]) : {
+          port_mappings = [for target in local.container_targets[container.name] : {
             containerPort = target.port
             hostPort      = var.ecs.service.ec2 != null ? 0 : target.port // "host" network can use target port 
             name          = join("-", ["container", target.protocol, target.port])
@@ -269,32 +306,6 @@ module "ecs" {
             "value" : "${length(container.device_idxs)}"
           }] : []
 
-          # command = flatten(concat([
-          #   for mount_point in container.mount_points :
-          #   [
-          #     "yum install -y gcc libstdc+-devel gcc-c+ fuse fuse-devel curl-devel libxml2-devel mailcap automake openssl-devel git gcc-c++",
-          #     "git clone https://github.com/s3fs-fuse/s3fs-fuse",
-          #     "cd s3fs-fuse/",
-          #     "./autogen.sh",
-          #     "./configure --prefix=/usr --with-openssl",
-          #     "make",
-          #     "make install",
-          #     "docker plugin install rexray/s3fs:latest S3FS_REGION=${local.region_name} S3FS_OPTIONS=\"allow_other,iam_role=auto,umask=000\" LIBSTORAGE_INT,EGRATION_VOLUME_OPERATIONS_MOUNT_ROOTPATH=/ --grant-all-permissions",
-          #     "yum update -y ecs-init",
-          #     "service docker restart && start ecs",
-          #   ] if mount_point.s3 != null
-          #   ],
-          #   container.command
-          # ))
-          # entrypoint = flatten(concat([
-          #   for mount_point in container.mount_points :
-          #   [
-          #     "/bin/bash",
-          #     "-c",
-          #   ] if mount_point.s3 != null
-          #   ],
-          #   container.entrypoint
-          # ))
           command                  = container.command
           entrypoint               = container.entrypoint
           readonly_root_filesystem = container.readonly_root_filesystem

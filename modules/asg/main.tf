@@ -1,7 +1,7 @@
 # https://github.com/terraform-aws-modules/terraform-aws-autoscaling/blob/master/examples/complete/main.tf
 module "asg" {
   source  = "terraform-aws-modules/autoscaling/aws"
-  version = "6.10.0"
+  version = "7.1.0"
 
   name            = var.name
   use_name_prefix = false
@@ -108,8 +108,8 @@ module "asg" {
   health_check_type               = "EC2"
   target_group_arns               = var.target_group_arns
   security_groups                 = [module.autoscaling_sg.security_group_id]
-  service_linked_role_arn         = aws_iam_service_linked_role.autoscaling.arn
-  instance_refresh                = var.instance_refresh
+  # service_linked_role_arn         = aws_iam_service_linked_role.autoscaling.arn
+  instance_refresh = var.instance_refresh
 
   # initial_lifecycle_hooks = [
   #   {
@@ -162,6 +162,23 @@ module "asg" {
         target_value = 70 // TODO: var.target_capacity_cpu
       }
     },
+    # scale-out = {
+    #   name                      = "scale-out"
+    #   adjustment_type           = "ExactCapacity"
+    #   policy_type               = "StepScaling"
+    #   estimated_instance_warmup = 120
+    #   step_adjustment = [
+    #     {
+    #       scaling_adjustment          = 1
+    #       metric_interval_lower_bound = 0
+    #       metric_interval_upper_bound = 10
+    #     },
+    #     {
+    #       scaling_adjustment          = 2
+    #       metric_interval_lower_bound = 10
+    #     }
+    #   ]
+    # }
     # # scale based on previous traffic
     # predictive-scaling = {
     #   policy_type = "PredictiveScaling"
@@ -200,21 +217,21 @@ module "asg" {
   autoscaling_group_tags = {}
   tags                   = var.tags
 
-  depends_on = [aws_iam_service_linked_role.autoscaling]
+  # depends_on = [aws_iam_service_linked_role.autoscaling]
 }
 
-resource "aws_iam_service_linked_role" "autoscaling" {
-  aws_service_name = "autoscaling.${local.dns_suffix}"
-  description      = "A service linked role for autoscaling"
-  custom_suffix    = var.name
+# resource "aws_iam_service_linked_role" "autoscaling" {
+#   aws_service_name = "autoscaling.${local.dns_suffix}"
+#   description      = "A service linked role for autoscaling"
+#   custom_suffix    = var.name
 
-  # Sometimes good sleep is required to have some IAM resources created before they can be used
-  provisioner "local-exec" {
-    command = "sleep 10"
-  }
+#   # Sometimes good sleep is required to have some IAM resources created before they can be used
+#   provisioner "local-exec" {
+#     command = "sleep 10"
+#   }
 
-  tags = var.tags
-}
+#   tags = var.tags
+# }
 
 module "autoscaling_sg" {
   source  = "terraform-aws-modules/security-group/aws"
@@ -234,7 +251,7 @@ module "autoscaling_sg" {
     from_port                = var.port_mapping == "dynamic" ? 32768 : target.port
     to_port                  = var.port_mapping == "dynamic" ? 65535 : target.port
     protocol                 = var.layer7_to_layer4_mapping[target.protocol]
-    description              = join(" ", ["Load", "Balancer", target.protocol, var.port_mapping == "dynamic" ? 32768 : target.port, "-", var.port_mapping == "dynamic" ? 65535 : target.port])
+    description              = join(" ", ["Security group for ASG", target.protocol, var.port_mapping == "dynamic" ? 32768 : target.port, "-", var.port_mapping == "dynamic" ? 65535 : target.port])
     source_security_group_id = var.source_security_group_id
     }
   ]

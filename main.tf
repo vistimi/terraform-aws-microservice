@@ -1,55 +1,52 @@
 locals {
   tags = merge(var.tags, { VpcId = var.vpc.id })
 
-  listeners = [for traffic in var.traffics : merge(traffic.listener, {
-    port = coalesce(
-      traffic.listener.port,
-      traffic.listener.protocol == "http" ? 80 : null,
-      traffic.listener.protocol == "https" ? 443 : null,
-      traffic.listener.protocol == "grpc" ? 443 : null,
-    )
-    protocol_version = coalesce(
-      traffic.listener.protocol_version,
-      traffic.listener.protocol == "http" ? "http1" : null,
-      traffic.listener.protocol == "https" ? "http1" : null,
-      traffic.listener.protocol == "grpc" ? "http2" : null,
-    )
+  listeners = { for container in var.orchestrator.group.deployment.containers : container.name => [
+    for traffic in container.traffics : merge(traffic.listener, {
+      port = coalesce(
+        traffic.listener.port,
+        traffic.listener.protocol == "http" ? 80 : null,
+        traffic.listener.protocol == "https" ? 443 : null,
+        traffic.listener.protocol == "grpc" ? 443 : null,
+      )
+      protocol_version = coalesce(
+        traffic.listener.protocol_version,
+        traffic.listener.protocol == "http" ? "http1" : null,
+        traffic.listener.protocol == "https" ? "http1" : null,
+        traffic.listener.protocol == "grpc" ? "http2" : null,
+      )
     })
-  ]
+    ]
+  }
 
-  base_target = [for index, traffic in var.traffics : merge(traffic.target, {
-    protocol = coalesce(
-      traffic.target.protocol,
-      local.listeners[index].protocol,
-    )
-    protocol_version = coalesce(
-      traffic.target.protocol_version,
-      traffic.target.protocol == "http" ? "http1" : null,
-      traffic.target.protocol == "https" ? "http1" : null,
-      traffic.target.protocol == "grpc" ? "http2" : null,
-      local.listeners[index].protocol_version,
-    )
-    health_check_path = coalesce(
-      traffic.target.health_check_path,
-      "/",
-    )
-  }) if traffic.base == true || length(var.traffics) == 1][0]
-
-  traffics = [for index, traffic in var.traffics : {
-    listener = local.listeners[index]
-    target   = local.base_target
-    base     = traffic.base
-  }]
+  targets = { for container in var.orchestrator.group.deployment.containers : container.name => [
+    for index, traffic in container.traffics : merge(traffic.target, {
+      protocol = coalesce(
+        traffic.target.protocol,
+        local.listeners[container.name][index].protocol,
+      )
+      protocol_version = coalesce(
+        traffic.target.protocol_version,
+        traffic.target.protocol == "http" ? "http1" : null,
+        traffic.target.protocol == "https" ? "http1" : null,
+        traffic.target.protocol == "grpc" ? "http2" : null,
+        local.listeners[container.name][index].protocol_version,
+      )
+      health_check_path = coalesce(
+        traffic.target.health_check_path,
+        "/",
+      )
+    })]
+  }
 
 }
 
 module "ecs" {
   source = "./modules/ecs"
 
-  name     = var.name
-  vpc      = local.vpc
-  route53  = var.route53
-  traffics = local.traffics
+  name    = var.name
+  vpc     = local.vpc
+  route53 = var.route53
   bucket_env = var.bucket_env != null ? {
     name     = join("-", [var.name, "env"])
     file_key = var.bucket_env.file_key
@@ -70,6 +67,10 @@ module "ecs" {
                 cpu         = coalesce(container.cpu, try(local.instances[var.orchestrator.group.ec2.instance_types[0]].cpu, null))
                 memory      = coalesce(container.memory, try(local.instances[var.orchestrator.group.ec2.instance_types[0]].memory_available, null))
                 device_idxs = coalesce(container.device_idxs, try(range(local.instances[var.orchestrator.group.ec2.instance_types[0]].device_count), null), [])
+                traffics = [for index, traffic in container.traffics : {
+                  listener = local.listeners[container.name][index]
+                  target   = local.targets[container.name][index]
+                }]
               },
             )
           ]

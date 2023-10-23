@@ -16,7 +16,6 @@ module "microservice" {
         health_check_path = "/ping" # if not specified, the health_check_path will be "/"
         protocol_version  = "http1" # by default it is `http1`
       }
-      base = true # only one base that will be the default traffic for the load balancer
     },
     {
       # this will redirect http:81 to http:8080
@@ -50,7 +49,6 @@ module "microservice" {
         health_check_path = "/ping" # if not specified, the health_check_path will be "/"
         protocol_version  = "http2" # by default it is `http1`
       }
-      base = true # only one base that will be the default traffic for the load balancer
     },
     {
       # this will redirect http:81 to http:8080

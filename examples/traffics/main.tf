@@ -1,29 +1,11 @@
 module "microservice" {
   source = "vistimi/microservice/aws"
 
-  name = "microservice-complete"
-
-  bucket_env = {
-    force_destroy = true
-    versioning    = false
-    file_key      = "file_local_name.env"
-    file_path     = "file_in_bucket_name.env"
-  }
-
-  vpc = {
-    id               = "my_vpc_id"
-    subnet_tier_ids  = ["id_subnet_tier_1", "id_subnet_tier_2"]
-    subnet_intra_ids = ["id_subnet_intra_1", "id_subnet_intra_2"]
-  }
+  name = "microservice-with-container-traffics"
 
   orchestrator = {
     group = {
-      name = "first"
       deployment = {
-        min_size     = 1
-        max_size     = 2
-        desired_size = 1
-
         containers = [
           {
             name = "first"
@@ -85,29 +67,13 @@ module "microservice" {
             readonly_root_filesystem = false
           }
         ]
+        # ...
       }
-
-      ec2 = {
-        key_name       = "name_of_key_to_ssh_with"
-        instance_types = ["t2.micro"]
-        os             = "linux"
-        os_version     = "2023"
-        capacities = [
-          # no need to have multiple specified, if only one only `type` is needed
-          {
-            type   = "ON_DEMAND"
-            base   = true
-            weight = 60
-          },
-          {
-            type   = "SPOT"
-            weight = 30
-          }
-        ]
-      }
+      # ...
     }
-    ecs = {}
+    # ...
   }
 
-  tags = {}
+  vpc      = {} # ...
+  traffics = [] # ...
 }

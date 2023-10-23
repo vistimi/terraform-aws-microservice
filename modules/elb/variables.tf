@@ -27,16 +27,24 @@ variable "traffics" {
       port             = number
       protocol_version = string
     })
-    target = optional(object({
+    target = object({
       protocol          = string
       port              = number
       protocol_version  = string
       health_check_path = string
       status_code       = optional(string)
-    }))
-    base = optional(bool)
+    })
   }))
   nullable = false
+}
+
+resource "null_resource" "traffics" {
+  lifecycle {
+    precondition {
+      condition     = length(distinct([for traffic in var.traffics : local.load_balancer_types[traffic.listener.protocol]])) == 1
+      error_message = "listeners must either use http/https or tls/tcp/tcp_udp/udp, not both/none: ${jsonencode(distinct([for traffic in var.traffics : local.load_balancer_types[traffic.listener.protocol]]))}"
+    }
+  }
 }
 
 variable "deployment_type" {
