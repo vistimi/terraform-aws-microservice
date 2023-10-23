@@ -373,10 +373,10 @@ func TestGrpcEndpoints(t *testing.T, endpoints []EndpointTest, address string) {
 				service := paths[0]
 				method := paths[1]
 
-				// cmd := fmt.Sprintf("wget https://github.com/fullstorydev/grpcurl/releases/download/v1.8.7/grpcurl_1.8.7_linux_%s.tar.gz -q; tar -xzvf grpcurl_1.8.7_linux_%s.tar.gz grpcurl; ./grpcurl -plaintext %s %s/%s", util.GetEnvVariable("ARCH"), util.GetEnvVariable("ARCH"), address, service, method)
+				// cmd := fmt.Sprintf("wget https://github.com/fullstorydev/grpcurl/releases/download/v1.8.7/grpcurl_1.8.7_linux_%s.tar.gz -q; tar -xzvf grpcurl_1.8.7_linux_%s.tar.gz grpcurl; ./grpcurl -plaintext %s %s/%s", util.GetEnvVariable("ARCH"), address, service, method)
 
 				request := util.Value(endpoint.Request, "{}")
-				cmd := fmt.Sprintf("curl -L https://github.com/vadimi/grpc-client-cli/releases/download/v1.18.0/grpc-client-cli_linux_%s.tar.gz | tar -xz; echo '%s' | ./grpc-client-cli -service %s -method %s %s", util.GetEnvVariable("ARCH"), request, service, method, address)
+				cmd := fmt.Sprintf(`ARCH=$(uname -m); if [ "$ARCH" == "x86_64" ]; then ARCH=arm64; fi; curl -L https://github.com/vadimi/grpc-client-cli/releases/download/v1.18.0/grpc-client-cli_linux_$ARCH.tar.gz | tar -xz; echo '%s' | ./grpc-client-cli -service %s -method %s %s`, request, service, method, address)
 
 				command := terratestShell.Command{
 					Command: "bash",

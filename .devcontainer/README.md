@@ -19,7 +19,4 @@ VPC_ID=***
 # if you want to use route53
 DOMAIN_NAME=name
 DOMAIN_SUFFIX=com
-
-# for gRPC testing, either 'x86_64' or 'amd64'
-ARCH=x86_64
 ```

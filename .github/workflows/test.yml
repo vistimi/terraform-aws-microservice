@@ -88,6 +88,7 @@ jobs:
       GITHUB_TOKEN: ${{ secrets.GH_TERRA_TOKEN }}
       DOMAIN_NAME: ${{ vars.DOMAIN_NAME }}
       DOMAIN_SUFFIX: ${{ vars.DOMAIN_SUFFIX }}
+      VPC_ID: ${{ vars.VPC_ID }}
 
     steps:
       - name: Checkout
