@@ -102,6 +102,8 @@ jobs:
         run: |
           make -f test/Makefile prepare
 
+          cd test; go mod download; cd ..
+
           ABS_TEST_DIR_NAME=./test/microservice/${{ matrix.dir_name }}
 
           # test and clean
