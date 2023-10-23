@@ -35,7 +35,7 @@ FROM ${GO_ALPINE_VARIANT} as builder-alpine-go
 FROM ${VARIANT} as runner
 
 RUN apk update
-RUN apk add -q --no-cache bash aws-cli make
+RUN apk add -q --no-cache make gcc libc-dev bash docker coreutils yq jq github-cli aws-cli curl
 
 # Golang setup
 COPY --from=builder-alpine-go /usr/local/go/ /usr/local/go/
