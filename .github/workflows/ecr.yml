@@ -19,7 +19,7 @@ on:
     branches-ignore: [dependabot/**, infrabot/**]
     paths: [Dockerfile*, '**/Dockerfile*']
   pull_request:
-    types: [opened, edited, synchronize, reopened]
+    types: [opened, reopened]
   delete:
 
 env:
