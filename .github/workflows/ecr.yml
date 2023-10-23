@@ -275,7 +275,7 @@ jobs:
 
           func_gh_event_to_ecr () {
             # create/push/delete
-            if [[ "${{ github.event_name }}" == "create" || ("${{ github.event_name }}" == "workflow_dispatch" && "${{ inputs.event_name }}" == "create") ]]; then
+            if [[ "${{ github.event_name }}" == "create" || ("${{ github.event_name }}" == "workflow_dispatch" && "${{ inputs.event_name }}" == "create") || "${{ github.event_name }}" == "pull_request" ]]; then
               func_ecr_create_repository
             elif [[ "${{ github.event_name }}" == "push" || ("${{ github.event_name }}" == "workflow_dispatch" && "${{ inputs.event_name }}" == "push") ]]; then
               func_ecr_push_image
