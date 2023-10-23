@@ -63,6 +63,10 @@ jobs:
           echo DOCKERFILES=$DOCKERFILES
           echo DOCKERFILES=$DOCKERFILES >> $GITHUB_ENV
 
+          echo ${{ github.event}}
+          echo ${{ github.event.ref_type}}
+          echo ${{ github.event.pull_request.state}}
+
       - name: Setup privacy env
         run: |
           if [[ $ECR_PRIVACY == private ]]; then
