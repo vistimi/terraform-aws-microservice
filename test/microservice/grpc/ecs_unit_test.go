@@ -1,6 +1,7 @@
 package microservice_test
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -39,6 +40,18 @@ var (
 		{
 			Listener: testAwsModule.TrafficPoint{
 				Port:     util.Ptr(443),
+				Protocol: util.Ptr("https"),
+			},
+			Target: util.Ptr(testAwsModule.TrafficPoint{
+				Port:            util.Ptr(50051),
+				ProtocolVersion: util.Ptr("grpc"),
+				StatusCode:      util.Ptr("0"),
+				HealthCheckPath: util.Ptr("/helloworld.Greeter/SayHello"),
+			}),
+		},
+		{
+			Listener: testAwsModule.TrafficPoint{
+				Port:     util.Ptr(444),
 				Protocol: util.Ptr("https"),
 			},
 			Target: util.Ptr(testAwsModule.TrafficPoint{
@@ -111,6 +124,18 @@ func Test_Unit_Microservice_Grpc_ECS_EC2(t *testing.T) {
 					},
 				},
 				"ecs": map[string]any{},
+			},
+
+			"route53": map[string]any{
+				"zones": []map[string]any{
+					{
+						"name": fmt.Sprintf("%s.%s", util.GetEnvVariable("DOMAIN_NAME"), util.GetEnvVariable("DOMAIN_SUFFIX")),
+					},
+				},
+				"record": map[string]any{
+					"prefixes":       []string{"www"},
+					"subdomain_name": name,
+				},
 			},
 
 			"tags": tags,

@@ -375,8 +375,19 @@ func TestGrpcEndpoints(t *testing.T, endpoints []EndpointTest, address string) {
 
 				// cmd := fmt.Sprintf("wget https://github.com/fullstorydev/grpcurl/releases/download/v1.8.7/grpcurl_1.8.7_linux_%s.tar.gz -q; tar -xzvf grpcurl_1.8.7_linux_%s.tar.gz grpcurl; ./grpcurl -plaintext %s %s/%s", util.GetEnvVariable("ARCH"), address, service, method)
 
+				go get github.com/cweill/gotests/gotests@latest 
+				go get github.com/fatih/gomodifytags@latest 
+				go get github.com/josharian/impl@latest 
+				go get github.com/haya14busa/goplay/cmd/goplay@latest 
+				go get github.com/go-delve/delve/cmd/dlv@latest 
+				go get honnef.co/go/tools/cmd/staticcheck@latest 
+				go get golang.org/x/tools/gopls@latest 
+				go get -v golang.org/x/tools/cmd/goimports@latest 
+				go get github.com/rogpeppe/godef@latest
+
+
 				request := util.Value(endpoint.Request, "{}")
-				cmd := fmt.Sprintf(`ARCH=$(uname -m); if [ "$ARCH" == "x86_64" ]; then ARCH=arm64; fi; curl -L https://github.com/vadimi/grpc-client-cli/releases/download/v1.18.0/grpc-client-cli_linux_$ARCH.tar.gz | tar -xz; echo '%s' | ./grpc-client-cli -service %s -method %s %s`, request, service, method, address)
+				cmd := fmt.Sprintf(`grpc-client-cli -service %s -method %s %s`, request, service, method, address)
 
 				command := terratestShell.Command{
 					Command: "bash",
