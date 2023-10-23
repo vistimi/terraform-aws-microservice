@@ -123,7 +123,6 @@ module "ecs" {
             from_port                = 0
             to_port                  = 0
             protocol                 = "-1"
-            cidr_blocks              = ["0.0.0.0/0"]
             description              = "Allow all traffic from ELB"
             source_security_group_id = module.elb.security_group.id
           }

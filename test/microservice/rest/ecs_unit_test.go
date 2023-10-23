@@ -13,6 +13,39 @@ import (
 	terratestShell "github.com/gruntwork-io/terratest/modules/shell"
 )
 
+var (
+	traffics_many_ingress_many_egress = []testAwsModule.Traffic{
+		{
+			Listener: testAwsModule.TrafficPoint{
+				Port:     util.Ptr(80),
+				Protocol: util.Ptr("http"),
+			},
+			Target: util.Ptr(testAwsModule.TrafficPoint{
+				Port: util.Ptr(80),
+			}),
+		},
+		{
+			Listener: testAwsModule.TrafficPoint{
+				Port:     util.Ptr(81),
+				Protocol: util.Ptr("http"),
+			},
+			Target: util.Ptr(testAwsModule.TrafficPoint{
+				Port: util.Ptr(81),
+			}),
+		},
+		{
+			Listener: testAwsModule.TrafficPoint{
+				Port:     util.Ptr(443),
+				Protocol: util.Ptr("https"),
+			},
+			Target: util.Ptr(testAwsModule.TrafficPoint{
+				Port:     util.Ptr(80),
+				Protocol: util.Ptr("http"),
+			}),
+		},
+	}
+)
+
 func Test_Unit_Microservice_Rest_ECS_Fargate_Httpd(t *testing.T) {
 	bashCode := fmt.Sprintf("echo SOME_VAR=some_value > %s/override.env", microservicePath)
 	command := terratestShell.Command{
@@ -21,7 +54,7 @@ func Test_Unit_Microservice_Rest_ECS_Fargate_Httpd(t *testing.T) {
 	}
 	terratestShell.RunCommandAndGetOutput(t, command)
 
-	id, tags, trafficsMap, dockerMap := testAwsModule.SetupMicroservice(t, microserviceInformation, traffics)
+	id, tags, trafficsMap, dockerMap := testAwsModule.SetupMicroservice(t, microserviceInformation, traffics_many_ingress_many_egress)
 	serviceNameSuffix := "sone"
 
 	name := strings.ToLower(util.Format("-", projectName, serviceName, util.GetEnvVariable("AWS_PROFILE_NAME"), id))
@@ -58,9 +91,10 @@ func Test_Unit_Microservice_Rest_ECS_Fargate_Httpd(t *testing.T) {
 									"/bin/bash",
 									"-c",
 								},
-								// install systemmd; service example start
 								"command": []string{
-									"apt update -q; apt install apache2 ufw systemctl curl -yq; ufw app list; systemctl start apache2; curl localhost; sleep infinity",
+									// listen to 80 by default
+									// $${VAR} and %%{VAR} is terraform herodoc
+									`apt update -q > /dev/null 2>&1; apt install apache2 ufw systemctl curl -yq > /dev/null 2>&1; ufw app list; echo -e 'Listen 81' >> /etc/apache2/ports.conf; echo print /etc/apache2/ports.conf.....; cat /etc/apache2/ports.conf; echo -e '<VirtualHost *:81>\nServerAdmin webmaster@localhost\nDocumentRoot /var/www/html\nErrorLog $${APACHE_LOG_DIR}/error.log\nCustomLog $${APACHE_LOG_DIR}/access.log combined\n</VirtualHost>' >> /etc/apache2/sites-enabled/000-default.conf; echo print /etc/apache2/sites-enabled/000-default.conf.....; cat /etc/apache2/sites-enabled/000-default.conf; systemctl start apache2; echo test localhost:: $(curl -s -o /dev/null -w '%%{http_code}' localhost); echo test localhost:81:: $(curl -s -o /dev/null -w '%%{http_code}' localhost:81); sleep infinity`,
 								},
 								"readonly_root_filesystem": false,
 							},
@@ -104,25 +138,25 @@ func Test_Unit_Microservice_Rest_ECS_Fargate_Httpd(t *testing.T) {
 		},
 	})
 
-	defer func() {
-		if r := recover(); r != nil {
-			// destroy all resources if panic
-			terraform.Destroy(t, options)
-		}
-		terratestStructure.RunTestStage(t, "cleanup", func() {
-			terraform.Destroy(t, options)
-		})
-	}()
+	// defer func() {
+	// 	if r := recover(); r != nil {
+	// 		// destroy all resources if panic
+	// 		terraform.Destroy(t, options)
+	// 	}
+	// 	terratestStructure.RunTestStage(t, "cleanup", func() {
+	// 		terraform.Destroy(t, options)
+	// 	})
+	// }()
 
-	// terratestStructure.RunTestStage(t, "deploy", func() {
-	// 	terraform.Init(t, options)
-	// 	terraform.Plan(t, options)
-	// 	terraform.Apply(t, options)
-	// })
-	// terratestStructure.RunTestStage(t, "validate", func() {
-	// 	// TODO: test that /etc/ecs/ecs.config is not empty, requires key_name coming from terratest maybe
-	// 	serviceName := util.Format("-", name, serviceNameSuffix)
-	// 	testAwsModule.ValidateMicroservice(t, name, deployment, serviceName)
-	// 	testAwsModule.ValidateRestEndpoints(t, microservicePath, deployment, traffics, name, "")
-	// })
+	terratestStructure.RunTestStage(t, "deploy", func() {
+		terraform.Init(t, options)
+		terraform.Plan(t, options)
+		terraform.Apply(t, options)
+	})
+	terratestStructure.RunTestStage(t, "validate", func() {
+		// TODO: test that /etc/ecs/ecs.config is not empty, requires key_name coming from terratest maybe
+		serviceName := util.Format("-", name, serviceNameSuffix)
+		testAwsModule.ValidateMicroservice(t, name, deployment, serviceName)
+		testAwsModule.ValidateRestEndpoints(t, microservicePath, deployment, traffics_many_ingress_many_egress, name, "")
+	})
 }

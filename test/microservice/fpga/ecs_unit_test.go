@@ -92,16 +92,10 @@ func Test_Unit_Microservice_FPGA_ECS_EC2_Densenet(t *testing.T) {
 								},
 								"command": []string{
 									// it needs the libraries and drivers for neuron to use the inferentia chips
-									// currently it uses only the CPU of the instance, not the neuron cores
 									// https://awsdocs-neuron.readthedocs-hosted.com/en/latest/general/arch/neuron-features/neuroncore-pipeline.html
 									// https://awsdocs-neuron.readthedocs-hosted.com/en/latest/src/examples/pytorch/pipeline_tutorial/neuroncore_pipeline_pytorch.html
-									"apt update; apt install git wget curl -qy",
-									"git clone https://github.com/pytorch/serve.git; cd serve; ls examples/image_classifier/densenet_161/; wget https://download.pytorch.org/models/densenet161-8d451a50.pth",
-									"torch-model-archiver --model-name densenet161 --version 1.0 --model-file examples/image_classifier/densenet_161/model.py --serialized-file densenet161-8d451a50.pth --handler image_classifier --extra-files examples/image_classifier/index_to_name.json",
-									"mkdir -p model_store; mv densenet161.mar model_store/",
-									"echo load_models=ALL >> config.properties; echo inference_address=http://0.0.0.0:8080 >> config.properties; echo management_address=http://0.0.0.0:8081 >> config.properties; echo metrics_address=http://0.0.0.0:8082 >> config.properties",
-									"torchserve --start --ncs --ts-config config.properties --model-store model_store",
-									"sleep infinity",
+									`apt update; apt install git wget curl -qy; git clone https://github.com/pytorch/serve.git; cd serve; ls examples/image_classifier/densenet_161/; wget https://download.pytorch.org/models/densenet161-8d451a50.pth; torch-model-archiver --model-name densenet161 --version 1.0 --model-file examples/image_classifier/densenet_161/model.py --serialized-file densenet161-8d451a50.pth --handler image_classifier --extra-files examples/image_classifier/index_to_name.json; mkdir -p model_store; mv densenet161.mar model_store/; 
+									echo -e 'load_models=ALL\ninference_address=http://0.0.0.0:8080\nmanagement_address=http://0.0.0.0:8081\nmetrics_address=http://0.0.0.0:8082' >> config.properties; torchserve --start --ncs --ts-config config.properties --model-store model_store; sleep infinity`,
 								},
 								"readonly_root_filesystem": false,
 								"user":                     "root",
