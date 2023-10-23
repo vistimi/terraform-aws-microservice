@@ -14,8 +14,7 @@ const (
 
 var (
 	microserviceInformation = testAwsModule.MicroserviceInformation{
-		Branch:          "trunk", // TODO: make it flexible for testing other branches
-		HealthCheckPath: "/",
+		Branch: "trunk", // TODO: make it flexible for testing other branches
 		Docker: testAwsModule.Docker{
 			Repository: testAwsModule.Repository{
 				Name: "ubuntu",
@@ -30,7 +29,6 @@ var (
 		MaxRetries: aws.Int(5),
 		Endpoints: []testAwsModule.EndpointTest{
 			{
-				Path:           microserviceInformation.HealthCheckPath,
 				ExpectedStatus: 200,
 				MaxRetries:     aws.Int(3),
 			},

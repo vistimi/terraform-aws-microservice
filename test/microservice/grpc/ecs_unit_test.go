@@ -20,8 +20,7 @@ const (
 
 var (
 	microserviceInformation = testAwsModule.MicroserviceInformation{
-		Branch:          "trunk", // TODO: make it flexible for testing other branches
-		HealthCheckPath: "/helloworld.Greeter/SayHello",
+		Branch: "trunk", // TODO: make it flexible for testing other branches
 		Docker: testAwsModule.Docker{
 			Registry: &testAwsModule.Registry{
 				Name: util.Ptr("grpc"),
@@ -46,6 +45,7 @@ var (
 				Port:            util.Ptr(50051),
 				ProtocolVersion: util.Ptr("grpc"),
 				StatusCode:      util.Ptr("0"),
+				HealthCheckPath: util.Ptr("/helloworld.Greeter/SayHello"),
 			}),
 		},
 	}
@@ -55,7 +55,6 @@ var (
 		Endpoints: []testAwsModule.EndpointTest{
 			{
 				Request:    util.Ptr(`{"name": "World"}`),
-				Path:       microserviceInformation.HealthCheckPath,
 				MaxRetries: util.Ptr(3),
 			},
 		},
@@ -92,6 +91,7 @@ func Test_Unit_Microservice_Grpc_ECS_EC2(t *testing.T) {
 							{
 								"name":                     "unique",
 								"docker":                   dockerMap,
+								"traffics":                 trafficsMap,
 								"readonly_root_filesystem": false,
 							},
 						},
@@ -112,7 +112,6 @@ func Test_Unit_Microservice_Grpc_ECS_EC2(t *testing.T) {
 				},
 				"ecs": map[string]any{},
 			},
-			"traffics": trafficsMap,
 
 			"tags": tags,
 		},

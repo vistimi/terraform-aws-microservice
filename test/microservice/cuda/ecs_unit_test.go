@@ -20,8 +20,7 @@ const (
 
 var (
 	microserviceInformation = testAwsModule.MicroserviceInformation{
-		Branch:          "trunk", // TODO: make it flexible for testing other branches
-		HealthCheckPath: "/",
+		Branch: "trunk", // TODO: make it flexible for testing other branches
 		Docker: testAwsModule.Docker{
 			Registry: &testAwsModule.Registry{
 				Ecr: &testAwsModule.Ecr{
@@ -47,7 +46,8 @@ var (
 				Protocol: util.Ptr("http"),
 			},
 			Target: util.Ptr(testAwsModule.TrafficPoint{
-				Port: util.Ptr(3000),
+				Port:            util.Ptr(3000),
+				HealthCheckPath: util.Ptr("/"),
 			}),
 		},
 	}
@@ -85,8 +85,9 @@ func Test_Unit_Microservice_GPU_ECS_EC2_Mnist(t *testing.T) {
 
 						"containers": []map[string]any{
 							{
-								"name":   "unique",
-								"docker": dockerMap,
+								"name":     "unique",
+								"docker":   dockerMap,
+								"traffics": trafficsMap,
 								"entrypoint": []string{
 									"/bin/bash",
 									"-c",
@@ -114,7 +115,6 @@ func Test_Unit_Microservice_GPU_ECS_EC2_Mnist(t *testing.T) {
 				},
 				"ecs": map[string]any{},
 			},
-			"traffics": trafficsMap,
 
 			"tags": tags,
 		},

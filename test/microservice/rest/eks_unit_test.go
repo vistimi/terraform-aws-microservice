@@ -53,6 +53,7 @@ package microservice_test
 // 								"cpu":    512,
 // 								"memory": 1024,
 // 								"docker": dockerMap,
+// "traffics": trafficsMap,
 // 								"entrypoint": []string{
 // 									"/bin/bash",
 // 									"-c",
@@ -79,8 +80,6 @@ package microservice_test
 // 				},
 // 				"ecs": map[string]any{},
 // 			},
-
-// 			"traffics": trafficsMap,
 
 // 			"route53": map[string]any{
 // 				"zones": []map[string]any{
