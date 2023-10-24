@@ -112,7 +112,7 @@ jobs:
 
               echo Running $test  
 
-              (go test -timeout 60m -v -run $test $DIR_NAME > test_results.txt) || true
+              (go test -timeout 60m -v -run $test $DIR_NAME > test_results.txt)
               exitCodeTest=$?
 
               if [ $exitCodeTest -eq 0  ]; then
@@ -124,20 +124,22 @@ jobs:
               cat test_results.txt
               echo "::endgroup::"
               
-              # extra cleanup in case the test goes over the timeout
-              export SKIP_deploy=true
-              export SKIP_validate=true
-              (go test -timeout 60m -p 1 -v -run $test $DIR_NAME > test_cleanup_results.txt) || true
-              exitCodeCleanup=$?
+              if [ $exitCodeTest -ne 0  ]; then
+                # extra cleanup in case the test goes over the timeout
+                export SKIP_deploy=true
+                export SKIP_validate=true
+                (go test -timeout 60m -p 1 -v -run $test $DIR_NAME > test_cleanup_results.txt)
+                exitCodeCleanup=$?
 
-              if [ $exitCodeCleanup -eq 0 ]; then                
-                echo -e '::group::\033[42mSUCCESSFUL\033[0m Click to view cleanup logs'
-              else
-                exitCode=$exitCodeCleanup
-                echo -e '::group::\033[42mFAILURE\033[0m Click to view cleanup logs'
+                if [ $exitCodeCleanup -eq 0 ]; then                
+                  echo -e '::group::\033[42mSUCCESSFUL\033[0m Click to view cleanup logs'
+                else
+                  exitCode=$exitCodeCleanup
+                  echo -e '::group::\033[42mFAILURE\033[0m Click to view cleanup logs'
+                fi
+                cat test_cleanup_results.txt
+                echo "::endgroup::"
               fi
-              cat test_cleanup_results.txt
-              echo "::endgroup::"
 
             done
           done
