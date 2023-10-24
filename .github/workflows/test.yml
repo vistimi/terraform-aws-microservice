@@ -115,7 +115,7 @@ jobs:
 
               echo "Running $test"
 
-              go test -timeout 60m -v -run Test_Unit_Microservice_Rest_ECS_Fargate_Httpd $DIR_NAME > test_results.txt
+              go test -timeout 60m -v -run $test $DIR_NAME > test_results.txt
               exitCode=$?
 
               if [ $exitCode -ne 0  ]; then                
@@ -124,15 +124,14 @@ jobs:
                 echo -e '\033[42mFAILURE\033[0m' test
               fi
 
-              echo Click to view test logs
-              echo "::group::Details"
+              echo Click to view test logs ::group::Details
               cat test_results.txt
-              echo "::endgroup::"
+              echo ::endgroup::
               
               # extra cleanup in case the test goes over the timeout
               export SKIP_deploy=true
               export SKIP_validate=true
-              go test -timeout 60m -p 1 -v -run Test_Unit_Microservice_Rest_ECS_Fargate_Httpd $DIR_NAME > test_cleanup_results.txt
+              go test -timeout 60m -p 1 -v -run $test $DIR_NAME > test_cleanup_results.txt
               exitCodeCleanup=$?
 
               if [ $exitCodeCleanup -ne 0 ]; then                
@@ -141,10 +140,9 @@ jobs:
                 echo -e '\033[42mFAILURE\033[0m' cleanup
               fi
 
-              echo Click to view cleanup logs
-              echo "::group::Details"
+              echo Click to view cleanup logs ::group::Details
               cat test_cleanup_results.txt
-              echo "::endgroup::"
+              echo ::endgroup::
 
             done
           done
