@@ -111,8 +111,7 @@ jobs:
             for test in $tests; do
 
               echo Running $test  
-              exitCodeTest=0
-              go test -timeout 60m -p 1 -v -run $test $DIR_NAME > test_results.txt; export exitCodeTest=$?
+              exitCodeTest=(go test -timeout 60m -p 1 -v -run $test $DIR_NAME > test_results.txt; echo $?)
               echo exitCodeTest $exitCodeTest
               echo after test
 
@@ -130,7 +129,7 @@ jobs:
                 export SKIP_deploy=true
                 export SKIP_validate=true
 
-                ((go test -timeout 60m -p 1 -v -run $test $DIR_NAME > test_cleanup_results.txt); exitCodeCleanup=$?) || true
+                exitCodeCleanup=(go test -timeout 60m -p 1 -v -run $test $DIR_NAME > test_cleanup_results.txt; echo $?)
 
                 if [ $exitCodeCleanup -eq 0 ]; then                
                   echo -e '::group::\033[42mSUCCESSFUL\033[0m Click to view cleanup logs'
