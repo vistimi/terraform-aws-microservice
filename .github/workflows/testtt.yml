@@ -12,7 +12,7 @@ jobs:
       - name: find tests
         id: get-test
         run: |
-          echo TEST_NAMES='["rest/Test_1", "grpc/Test_2"]' >> $GITHUB_OUTPUT
+          echo TEST_NAMES=["rest/Test_1", "grpc/Test_2"] >> $GITHUB_OUTPUT
 
   test:
     needs: [setup]
