@@ -114,19 +114,17 @@ jobs:
             tests=$(grep -h -Eo 'func\s+Test[A-Za-z_0-9]+\(' $file | sed -E 's/func\s+([A-Za-z_0-9]+)\(.*$/\1/')
             for test in $tests; do
 
-              echo "::group::$test"              
+              echo Running $test :::           
 
               go test -timeout 60m -v -run $test $DIR_NAME > test_results.txt
               exitCodeTest=$?
 
-              if [ $exitCodeTest -ne 0  ]; then                
-                echo -e '\033[42mSUCCESSFUL\033[0m' test
+              if [ $exitCodeTest -eq 0  ]; then                
+                echo -e '\033[42mSUCCESSFUL\033[0m' "::group::Click to view test logs"
               else
-                echo -e '\033[42mFAILURE\033[0m' test
                 exitCode=$exitCodeTest
+                echo -e '\033[42mFAILURE\033[0m' "::group::Click to view test logs"                
               fi
-
-              echo "::group::Click to view test logs"
               cat test_results.txt
               echo "::endgroup::"
               
@@ -136,17 +134,13 @@ jobs:
               go test -timeout 60m -p 1 -v -run $test $DIR_NAME > test_cleanup_results.txt
               exitCodeCleanup=$?
 
-              if [ $exitCodeCleanup -ne 0 ]; then                
-                echo -e '\033[42mSUCCESSFUL\033[0m' cleanup
+              if [ $exitCodeCleanup -eq 0 ]; then                
+                echo -e '\033[42mSUCCESSFUL\033[0m' "::group::Click to view cleanup logs"
               else
-                echo -e '\033[42mFAILURE\033[0m' cleanup
                 exitCode=$exitCodeCleanup
+                echo -e '\033[42mFAILURE\033[0m' "::group::Click to view cleanup logs"                
               fi
-
-              echo "::group::Click to view cleanup logs"
               cat test_cleanup_results.txt
-              echo "::endgroup::"
-
               echo "::endgroup::"
 
             done
