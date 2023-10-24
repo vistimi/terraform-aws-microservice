@@ -111,8 +111,11 @@ jobs:
             for test in $tests; do
 
               echo Running $test  
-
-              ((go test -timeout 60m -p 1 -v -run $test $DIR_NAME > test_results.txt); exitCodeTest=$?) || true
+              exitCodeTest=0
+              $(go test -timeout 60m -p 1 -v -run $test $DIR_NAME > test_results.txt; exitCodeTest=$?) || true
+              echo exitCodeTest $exitCodeTest
+              ($(go test -timeout 60m -p 1 -v -run $test $DIR_NAME > test_results.txt); exitCodeTest=$?) || true
+              echo exitCodeTest $exitCodeTest
 
               echo after test
 
