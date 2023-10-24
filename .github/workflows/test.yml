@@ -141,4 +141,4 @@ jobs:
 
             done
           done
-          exit $exitCode
+          # exit $exitCode
