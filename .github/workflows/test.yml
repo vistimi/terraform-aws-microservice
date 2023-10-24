@@ -28,9 +28,11 @@ jobs:
       ECR_REGISTRY_URI: ${{ steps.get-output.outputs.ECR_REGISTRY_URI }}
       IMAGE_TAG: ${{ steps.get-output.outputs.IMAGE_TAG }}
       ECR_REPOSITORY_EXTENSION: ${{ steps.get-output.outputs.ECR_REPOSITORY_EXTENSION }}
+      DIR_NAME: ${{ steps.get-test.outputs.DIR_NAME }}
+      TEST_NAMES: ${{ steps.get-test.outputs.TEST_NAMES }}
     strategy:
       matrix:
-        environment: ['test']
+        environment: ['test']        
     environment: ${{ matrix.environment }}
 
     steps:
@@ -72,10 +74,9 @@ jobs:
         username: AWS
         password: ${{ needs.setup.outputs.ECR_LOGIN_PASSWORD }}
     strategy:
-      matrix:
-        # dir_name: ["grpc", "cuda", "fpga", ...]
-        dir_name: ["rest"]
+      matrix:        
         environment: ['test']
+        dir_name: ["test"] # ["grpc", "cuda", "fpga", ...]
     environment: ${{ matrix.environment }}
 
     env:      
@@ -106,13 +107,36 @@ jobs:
         run: |
           cd test
           go mod download
+          files=$(find ./microservice/${{ matrix.dir_name }} -type f -name "*_test.go")
+          for file in $files; do
+            tests=$(grep -h -Eo 'func\s+Test[A-Za-z_0-9]+\(' $file | sed -E 's/func\s+([A-Za-z_0-9]+)\(.*$/\1/')
+            for test in $tests; do
+              echo "Running $test"
+              go test -timeout 60m -v -run Test_Unit_Microservice_Rest_ECS_Fargate_Httpd ./grpc > test_results.txt
+              exitCode=$?
 
-          ABS_TEST_DIR_NAME=./microservice/${{ matrix.dir_name }}
+              if [ $exitCode -ne 0  ] || [ $exitCodeCleanup -ne 0 ]; then                
+                echo -e '\033[42mSUCCESSFUL\033[0m' test
+              else
+                echo -e '\033[42mFAILURE\033[0m' test
+              fi
+              echo "<details><summary>Click to view test logs</summary>"
+              cat test_results.txt
+              echo "</details>"
+              
+              # extra cleanup in case the test goes over the timeout
+              export SKIP_deploy=true
+              export SKIP_validate=true
+              go test -timeout 60m -p 1 -v -run Test_Unit_Microservice_Rest_ECS_Fargate_Httpd ./grpc > test_cleanup_results.txt
+              exitCodeCleanup=$?
 
-          # test and clean
-          go test -timeout 60m -p 1 -v -cover $ABS_TEST_DIR_NAME
-
-          # double cleaning check
-          export SKIP_deploy=true
-          export SKIP_validate=true
-          go test -timeout 60m -p 1 -v -cover $ABS_TEST_DIR_NAME
+              if [ $exitCode -ne 0  ] || [ $exitCodeCleanup -ne 0 ]; then                
+                echo -e '\033[42mSUCCESSFUL\033[0m' cleanup
+              else
+                echo -e '\033[42mFAILURE\033[0m' cleanup
+              fi
+              echo "<details><summary>Click to view cleanup logs</summary>"
+              cat test_cleanup_results.txt
+              echo "</details>"
+            done
+          done
