@@ -1,0 +1,33 @@
+name: Testtttt
+
+on:
+    workflow_dispatch:
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      DIR_NAME: ${{ steps.get-test.outputs.DIR_NAME }}
+      TEST_NAMES: ${{ steps.get-test.outputs.TEST_NAMES }}
+    strategy:
+      matrix:
+        environment: ['test']
+        # dir_name: ["grpc", "cuda", "fpga", ...]
+        dir_name: ["rest", "grpc"]
+    steps:
+      - name: find tests
+        id: get-test
+        run: |
+          echo "DIR_NAME=${{ matrix.environment }}" >> $GITHUB_OUTPUT
+          echo "TEST_NAMES=${{ matrix.dir_name }}" >> $GITHUB_OUTPUT
+
+  test:
+    needs: [setup]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Print
+        run: |
+          echo DIR_NAME:: ${{ needs.setup.outputs.DIR_NAME }}
+          echo TEST_NAMES:: ${{ needs.setup.outputs.TEST_NAMES }}
+        
