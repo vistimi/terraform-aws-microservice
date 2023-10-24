@@ -72,7 +72,7 @@ jobs:
         password: ${{ needs.setup.outputs.ECR_LOGIN_PASSWORD }}
     strategy:
       matrix:
-        dir_name: ["test"] # ["grpc", "cuda", "fpga", ...]
+        dir_name: ["rest"] # ["grpc", "cuda", "fpga", ...]
     environment: test
 
     env:      
@@ -112,8 +112,6 @@ jobs:
 
               echo Running $test  
               exitCodeTest=$(go test -timeout 60m -p 1 -v -run $test $DIR_NAME > test_results.txt; echo $?)
-              echo exitCodeTest $exitCodeTest
-              echo after test
 
               if [ $exitCodeTest -eq 0  ]; then
                 echo -e '::group::\033[42mSUCCESSFUL\033[0m Click to view test logs'
