@@ -102,7 +102,6 @@ func Test_Unit_Microservice_Rest_ECS_EC2_ProcessorFamily_None(t *testing.T) {
 		terraform.Apply(t, options)
 	})
 	terratestStructure.RunTestStage(t, "validate", func() {
-		// TODO: test that /etc/ecs/ecs.config is not empty, requires key_name coming from terratest maybe
 		serviceName := util.Format("-", name, serviceNameSuffix)
 		testAwsModule.ValidateMicroservice(t, name, deployment, serviceName)
 		testAwsModule.ValidateRestEndpoints(t, microservicePath, deployment, traffics_http, name, "")
@@ -187,7 +186,6 @@ func Test_Unit_Microservice_Rest_ECS_EC2_ProcessorFamily_AMD(t *testing.T) {
 		terraform.Apply(t, options)
 	})
 	terratestStructure.RunTestStage(t, "validate", func() {
-		// TODO: test that /etc/ecs/ecs.config is not empty, requires key_name coming from terratest maybe
 		serviceName := util.Format("-", name, serviceNameSuffix)
 		testAwsModule.ValidateMicroservice(t, name, deployment, serviceName)
 		testAwsModule.ValidateRestEndpoints(t, microservicePath, deployment, traffics_http, name, "")
@@ -272,7 +270,6 @@ func Test_Unit_Microservice_Rest_ECS_EC2_ProcessorFamily_Intel(t *testing.T) {
 		terraform.Apply(t, options)
 	})
 	terratestStructure.RunTestStage(t, "validate", func() {
-		// TODO: test that /etc/ecs/ecs.config is not empty, requires key_name coming from terratest maybe
 		serviceName := util.Format("-", name, serviceNameSuffix)
 		testAwsModule.ValidateMicroservice(t, name, deployment, serviceName)
 		testAwsModule.ValidateRestEndpoints(t, microservicePath, deployment, traffics_http, name, "")
@@ -357,7 +354,6 @@ func Test_Unit_Microservice_Rest_ECS_EC2_ProcessorFamily_AwsGraviton(t *testing.
 		terraform.Apply(t, options)
 	})
 	terratestStructure.RunTestStage(t, "validate", func() {
-		// TODO: test that /etc/ecs/ecs.config is not empty, requires key_name coming from terratest maybe
 		serviceName := util.Format("-", name, serviceNameSuffix)
 		testAwsModule.ValidateMicroservice(t, name, deployment, serviceName)
 		testAwsModule.ValidateRestEndpoints(t, microservicePath, deployment, traffics_http, name, "")

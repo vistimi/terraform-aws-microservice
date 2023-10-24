@@ -2,7 +2,12 @@ module github.com/vistimi/terraform-aws-microservice
 
 go 1.18
 
-require github.com/gruntwork-io/terratest v0.40.24
+require (
+	github.com/aws/aws-sdk-go v1.40.56
+	github.com/google/go-cmp v0.5.9
+	github.com/gruntwork-io/terratest v0.40.24
+	github.com/likexian/gokit v0.25.9
+)
 
 require (
 	cloud.google.com/go v0.110.4 // indirect
@@ -12,7 +17,6 @@ require (
 	cloud.google.com/go/storage v1.30.1 // indirect
 	github.com/agext/levenshtein v1.2.3 // indirect
 	github.com/apparentlymart/go-textseg/v13 v13.0.0 // indirect
-	github.com/aws/aws-sdk-go v1.40.56
 	github.com/bgentry/go-netrc v0.0.0-20140422174119-9fd32a8b3d3d // indirect
 	github.com/boombuler/barcode v1.0.1-0.20190219062509-6c824513bacc // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
@@ -24,7 +28,6 @@ require (
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
-	github.com/google/go-cmp v0.5.9
 	github.com/google/gofuzz v1.1.0 // indirect
 	github.com/google/s2a-go v0.1.4 // indirect
 	github.com/google/uuid v1.3.0 // indirect
@@ -46,7 +49,6 @@ require (
 	github.com/json-iterator/go v1.1.11 // indirect
 	github.com/klauspost/compress v1.13.6 // indirect
 	github.com/kr/pretty v0.3.1 // indirect
-	github.com/likexian/gokit v0.25.9
 	github.com/mattn/go-zglob v0.0.2-0.20190814121620-e3c945676326 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/mitchellh/go-testing-interface v1.0.0 // indirect

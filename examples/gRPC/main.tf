@@ -12,7 +12,7 @@ module "microservice" {
       deployment = {
         containers = [
           {
-              traffics = [
+            traffics = [
               {
                 listener = {
                   # port is by default 443 with https
@@ -49,6 +49,5 @@ module "microservice" {
     # ...
   }
 
-  vpc          = {} # ...
-  orchestrator = {} # ...
+  vpc = {} # ...
 }

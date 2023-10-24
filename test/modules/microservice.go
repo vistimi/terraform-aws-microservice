@@ -312,10 +312,10 @@ func TestRestEndpoints(t *testing.T, endpoints []EndpointTest) {
 }
 
 func ValidateGrpcEndpoints(t *testing.T, microservicePath string, deployment DeploymentTest, traffics []Traffic, name, modulePath string) {
-	terratestLogger.Log(t, "Validate gRPC endpoints")
-	sleepBetweenRetries := 30 * time.Second
-	terratestLogger.Log(t, fmt.Sprintf("Sleeping %s...", sleepBetweenRetries))
-	time.Sleep(sleepBetweenRetries)
+	// terratestLogger.Log(t, "Validate gRPC endpoints")
+	// sleepBetweenRetries := 30 * time.Second
+	// terratestLogger.Log(t, fmt.Sprintf("Sleeping %s...", sleepBetweenRetries))
+	// time.Sleep(sleepBetweenRetries)
 
 	for _, traffic := range traffics {
 		terratestLogger.Log(t, "protocol", traffic.Listener.Protocol)
@@ -336,6 +336,8 @@ func ValidateGrpcEndpoints(t *testing.T, microservicePath string, deployment Dep
 				if endpoint.Command != nil {
 					re := regexp.MustCompile(`<URL>`)
 					newEndpoint.Command = util.Ptr(re.ReplaceAllString(util.Value(endpoint.Command), route53DnsUrl))
+				} else {
+					newEndpoint.Path = util.Ptr(util.Value(traffic.Target.HealthCheckPath, "/"))
 				}
 
 				endpointsLoadBalancer = append(endpointsLoadBalancer, newEndpoint)
@@ -373,21 +375,23 @@ func TestGrpcEndpoints(t *testing.T, endpoints []EndpointTest, address string) {
 				service := paths[0]
 				method := paths[1]
 
-				// cmd := fmt.Sprintf("wget https://github.com/fullstorydev/grpcurl/releases/download/v1.8.7/grpcurl_1.8.7_linux_%s.tar.gz -q; tar -xzvf grpcurl_1.8.7_linux_%s.tar.gz grpcurl; ./grpcurl -plaintext %s %s/%s", util.GetEnvVariable("ARCH"), address, service, method)
-
-				go get github.com/cweill/gotests/gotests@latest 
-				go get github.com/fatih/gomodifytags@latest 
-				go get github.com/josharian/impl@latest 
-				go get github.com/haya14busa/goplay/cmd/goplay@latest 
-				go get github.com/go-delve/delve/cmd/dlv@latest 
-				go get honnef.co/go/tools/cmd/staticcheck@latest 
-				go get golang.org/x/tools/gopls@latest 
-				go get -v golang.org/x/tools/cmd/goimports@latest 
-				go get github.com/rogpeppe/godef@latest
-
-
 				request := util.Value(endpoint.Request, "{}")
-				cmd := fmt.Sprintf(`grpc-client-cli -service %s -method %s %s`, request, service, method, address)
+
+				// cmdDownload := fmt.Sprintf(
+				// 	"curl -Ls https://github.com/vadimi/grpc-client-cli/releases/download/v1.18.0/grpc-client-cli_linux_%s.tar.gz | tar -xz",
+				// 	`$(arch=$(uname -m); if [ "$arch" == "aarch64" ]; then arch=arm64; fi; echo $arch)`,
+				// )
+				// cmdRequest := fmt.Sprintf("echo '%s' | ./grpc-client-cli -service %s -method %s %s", request, service, method, address)
+
+				cmdDownload := fmt.Sprintf(
+					`arch=$(uname -m); if [ "$arch" == "aarch64" ]; then arch=arm64; fi; wget https://github.com/fullstorydev/grpcurl/releases/download/v1.8.7/grpcurl_1.8.7_linux_%s.tar.gz -q; tar -xzvf grpcurl_1.8.7_linux_%s.tar.gz grpcurl; rm grpcurl_1.8.7_linux_%s.tar.gz`,
+					`$arch`,
+					`$arch`,
+					`$arch`,
+				)
+				cmdRequest := fmt.Sprintf("./grpcurl -d '%s' %s %s.%s", request, address, service, method)
+
+				cmd := fmt.Sprintf("%s; %s", cmdDownload, cmdRequest)
 
 				command := terratestShell.Command{
 					Command: "bash",

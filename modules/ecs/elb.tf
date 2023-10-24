@@ -1,14 +1,16 @@
+locals {
+  unique_zone_names = distinct(flatten([
+    for traffic in local.traffics : [
+      for zone in try(var.route53.zones, []) : zone.name
+    ] if traffic.listener.protocol == "https"
+  ]))
+}
+
 # -----------------
 #     ACM
 # -----------------
 data "aws_route53_zone" "current" {
-  for_each = {
-    for name in flatten([
-      for traffic in local.traffics : [
-        for zone in try(var.route53.zones, []) : zone.name
-      ] if traffic.listener.protocol == "https"
-    ]) : name => {}
-  }
+  for_each = { for name in local.unique_zone_names : name => {} }
 
   name         = each.key
   private_zone = false
@@ -18,13 +20,7 @@ module "acm" {
   source  = "terraform-aws-modules/acm/aws"
   version = "4.3.2"
 
-  for_each = {
-    for name in flatten([
-      for traffic in local.traffics : [
-        for zone in try(var.route53.zones, []) : zone.name
-      ] if traffic.listener.protocol == "https"
-    ]) : name => {}
-  }
+  for_each = { for name in local.unique_zone_names : name => {} }
 
   create_certificate     = true
   create_route53_records = true

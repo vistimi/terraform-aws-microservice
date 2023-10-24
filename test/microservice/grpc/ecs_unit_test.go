@@ -45,8 +45,9 @@ var (
 			Target: util.Ptr(testAwsModule.TrafficPoint{
 				Port:            util.Ptr(50051),
 				ProtocolVersion: util.Ptr("grpc"),
-				StatusCode:      util.Ptr("0"),
+				StatusCode:      util.Ptr("0,12"),
 				HealthCheckPath: util.Ptr("/helloworld.Greeter/SayHello"),
+				// HealthCheckPath: util.Ptr("/grpc.health.v1.Health/Check"),
 			}),
 		},
 		{
@@ -57,8 +58,9 @@ var (
 			Target: util.Ptr(testAwsModule.TrafficPoint{
 				Port:            util.Ptr(50051),
 				ProtocolVersion: util.Ptr("grpc"),
-				StatusCode:      util.Ptr("0"),
+				StatusCode:      util.Ptr("0,12"),
 				HealthCheckPath: util.Ptr("/helloworld.Greeter/SayHello"),
+				// HealthCheckPath: util.Ptr("/grpc.health.v1.Health/Check"),
 			}),
 		},
 	}
@@ -67,7 +69,8 @@ var (
 		MaxRetries: aws.Int(10),
 		Endpoints: []testAwsModule.EndpointTest{
 			{
-				Request:    util.Ptr(`{"name": "World"}`),
+				Request: util.Ptr(`{"name": "World"}`),
+				// Request:    util.Ptr(`{"service": ""}`),
 				MaxRetries: util.Ptr(3),
 			},
 		},
@@ -78,6 +81,7 @@ var (
 // https://docs.aws.amazon.com/deep-learning-containers/latest/devguide/deep-learning-containers-ecs-tutorials-training.html
 func Test_Unit_Microservice_Grpc_ECS_EC2(t *testing.T) {
 	id, tags, trafficsMap, dockerMap := testAwsModule.SetupMicroservice(t, microserviceInformation, traffics)
+
 	serviceNameSuffix := "unique"
 
 	name := strings.ToLower(util.Format("-", projectName, serviceName, util.GetEnvVariable("AWS_PROFILE_NAME"), id))
@@ -100,19 +104,25 @@ func Test_Unit_Microservice_Grpc_ECS_EC2(t *testing.T) {
 						"max_size":     1,
 						"desired_size": 1,
 
+						"cpu":    2000,
+						"memory": 3700,
+
 						"containers": []map[string]any{
 							{
 								"name":                     "unique",
 								"docker":                   dockerMap,
 								"traffics":                 trafficsMap,
 								"readonly_root_filesystem": false,
+
+								"cpu":    2000,
+								"memory": 3700,
 							},
 						},
 					},
 
 					"ec2": map[string]any{
 						"key_name":       nil,
-						"instance_types": []string{"t3.small"},
+						"instance_types": []string{"t3.medium"},
 						"os":             "linux",
 						"os_version":     "2023",
 
@@ -158,7 +168,6 @@ func Test_Unit_Microservice_Grpc_ECS_EC2(t *testing.T) {
 		terraform.Apply(t, options)
 	})
 	terratestStructure.RunTestStage(t, "validate", func() {
-		// TODO: test that /etc/ecs/ecs.config is not empty, requires key_name coming from terratest maybe
 		serviceName := util.Format("-", name, serviceNameSuffix)
 		testAwsModule.ValidateMicroservice(t, name, deployment, serviceName)
 		testAwsModule.ValidateGrpcEndpoints(t, microservicePath, deployment, traffics, name, "")

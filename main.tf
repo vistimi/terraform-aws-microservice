@@ -7,13 +7,13 @@ locals {
         traffic.listener.port,
         traffic.listener.protocol == "http" ? 80 : null,
         traffic.listener.protocol == "https" ? 443 : null,
-        traffic.listener.protocol == "grpc" ? 443 : null,
+        traffic.listener.protocol_version == "grpc" ? 443 : null,
       )
       protocol_version = coalesce(
         traffic.listener.protocol_version,
         traffic.listener.protocol == "http" ? "http1" : null,
         traffic.listener.protocol == "https" ? "http1" : null,
-        traffic.listener.protocol == "grpc" ? "http2" : null,
+        traffic.target.protocol_version == "grpc" ? "grpc" : null,
       )
     })
     ]
@@ -29,7 +29,6 @@ locals {
         traffic.target.protocol_version,
         traffic.target.protocol == "http" ? "http1" : null,
         traffic.target.protocol == "https" ? "http1" : null,
-        traffic.target.protocol == "grpc" ? "http2" : null,
         local.listeners[container.name][index].protocol_version,
       )
       health_check_path = coalesce(

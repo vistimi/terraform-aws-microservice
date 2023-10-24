@@ -73,8 +73,8 @@ jobs:
         password: ${{ needs.setup.outputs.ECR_LOGIN_PASSWORD }}
     strategy:
       matrix:
-        # dir_name: ["cuda", "fpga", ...]
-        dir_name: ["rest", "grpc"]
+        # dir_name: ["grpc", "cuda", "fpga", ...]
+        dir_name: ["rest"]
         environment: ['test']
     environment: ${{ matrix.environment }}
 
