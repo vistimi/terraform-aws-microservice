@@ -112,11 +112,11 @@ jobs:
 
               echo Running $test  
 
-              $(go test -timeout 60m -v -run $test $DIR_NAME > test_results.txt)
+              (go test -timeout 60m -v -run $test $DIR_NAME > test_results.txt) || true
               exitCodeTest=$?
 
-              if [ $exitCodeTest -eq 0  ]; then                
-                echo "::group::\033[42mSUCCESSFUL\033[0m Click to view test logs"
+              if [ $exitCodeTest -eq 0  ]; then
+                echo -e '::group::\033[42mSUCCESSFUL\033[0m Click to view test logs'
               else
                 exitCode=$exitCodeTest
                 echo -e '::group::\033[42mFAILURE\033[0m Click to view test logs'
@@ -127,7 +127,7 @@ jobs:
               # extra cleanup in case the test goes over the timeout
               export SKIP_deploy=true
               export SKIP_validate=true
-              $(go test -timeout 60m -p 1 -v -run $test $DIR_NAME > test_cleanup_results.txt)
+              (go test -timeout 60m -p 1 -v -run $test $DIR_NAME > test_cleanup_results.txt) || true
               exitCodeCleanup=$?
 
               if [ $exitCodeCleanup -eq 0 ]; then                
