@@ -107,12 +107,13 @@ jobs:
         run: |
           cd test
           go mod download
-          files=$(find ./microservice/${{ matrix.dir_name }} -type f -name "*_test.go")
+          DIR_NAME=./microservice/${{ matrix.dir_name }}
+          files=$(find $DIR_NAME -type f -name "*_test.go")
           for file in $files; do
             tests=$(grep -h -Eo 'func\s+Test[A-Za-z_0-9]+\(' $file | sed -E 's/func\s+([A-Za-z_0-9]+)\(.*$/\1/')
             for test in $tests; do
               echo "Running $test"
-              go test -timeout 60m -v -run Test_Unit_Microservice_Rest_ECS_Fargate_Httpd ./grpc > test_results.txt
+              go test -timeout 60m -v -run Test_Unit_Microservice_Rest_ECS_Fargate_Httpd $DIR_NAME > test_results.txt
               exitCode=$?
 
               if [ $exitCode -ne 0  ] || [ $exitCodeCleanup -ne 0 ]; then                
@@ -127,7 +128,7 @@ jobs:
               # extra cleanup in case the test goes over the timeout
               export SKIP_deploy=true
               export SKIP_validate=true
-              go test -timeout 60m -p 1 -v -run Test_Unit_Microservice_Rest_ECS_Fargate_Httpd ./grpc > test_cleanup_results.txt
+              go test -timeout 60m -p 1 -v -run Test_Unit_Microservice_Rest_ECS_Fargate_Httpd $DIR_NAME > test_cleanup_results.txt
               exitCodeCleanup=$?
 
               if [ $exitCode -ne 0  ] || [ $exitCodeCleanup -ne 0 ]; then                
