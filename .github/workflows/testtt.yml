@@ -24,6 +24,11 @@ jobs:
   test:
     needs: [setup]
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        environment: ['test']
+        # dir_name: ["grpc", "cuda", "fpga", ...]
+        dir_name: ["rest", "grpc"]
 
     steps:
       - name: Print
