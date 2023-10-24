@@ -5,8 +5,8 @@ on:
     #     workflows: ["Docker registry"]
     #     types:
     #     - completed
-    push:
-      branches: [trunk]
+    # push:
+    #   branches: [trunk]
     workflow_dispatch:
 
 env:
