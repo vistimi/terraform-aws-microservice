@@ -108,25 +108,27 @@ jobs:
           cd test
           go mod download
           DIR_NAME=./microservice/${{ matrix.dir_name }}
+          exitCode=0
           files=$(find $DIR_NAME -type f -name "*_test.go")
           for file in $files; do
             tests=$(grep -h -Eo 'func\s+Test[A-Za-z_0-9]+\(' $file | sed -E 's/func\s+([A-Za-z_0-9]+)\(.*$/\1/')
             for test in $tests; do
 
-              echo "Running $test"
+              echo "::group::$test"              
 
               go test -timeout 60m -v -run $test $DIR_NAME > test_results.txt
-              exitCode=$?
+              exitCodeTest=$?
 
-              if [ $exitCode -ne 0  ]; then                
+              if [ $exitCodeTest -ne 0  ]; then                
                 echo -e '\033[42mSUCCESSFUL\033[0m' test
               else
                 echo -e '\033[42mFAILURE\033[0m' test
+                exitCode=$exitCodeTest
               fi
 
-              echo Click to view test logs ::group::Details
+              echo "::group::Click to view test logs"
               cat test_results.txt
-              echo ::endgroup::
+              echo "::endgroup::"
               
               # extra cleanup in case the test goes over the timeout
               export SKIP_deploy=true
@@ -138,11 +140,15 @@ jobs:
                 echo -e '\033[42mSUCCESSFUL\033[0m' cleanup
               else
                 echo -e '\033[42mFAILURE\033[0m' cleanup
+                exitCode=$exitCodeCleanup
               fi
 
-              echo Click to view cleanup logs ::group::Details
+              echo "::group::Click to view cleanup logs"
               cat test_cleanup_results.txt
-              echo ::endgroup::
+              echo "::endgroup::"
+
+              echo "::endgroup::"
 
             done
           done
+          exit $exitCode
