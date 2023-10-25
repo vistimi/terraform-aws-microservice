@@ -136,7 +136,6 @@ func Test_Unit_Microservice_GPU_ECS_EC2_Mnist(t *testing.T) {
 		terraform.Apply(t, options)
 	})
 	terratestStructure.RunTestStage(t, "validate", func() {
-		// TODO: test that /etc/ecs/ecs.config is not empty, requires key_name coming from terratest maybe
 		serviceName := util.Format("-", name, serviceNameSuffix)
 		testAwsModule.ValidateMicroservice(t, name, deployment, serviceName)
 		testAwsModule.ValidateRestEndpoints(t, microservicePath, deployment, traffics, name, "")

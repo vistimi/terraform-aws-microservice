@@ -1,12 +1,12 @@
 name: Test
 
 on:
-    workflow_run:
-        workflows: ["Docker registry"]
-        types:
-        - completed
-    push:
-      branches: [trunk]
+    # workflow_run:
+    #     workflows: ["Docker registry"]
+    #     types:
+    #     - completed
+    # push:
+    #   branches: [trunk]
     workflow_dispatch:
 
 env:
@@ -28,10 +28,9 @@ jobs:
       ECR_REGISTRY_URI: ${{ steps.get-output.outputs.ECR_REGISTRY_URI }}
       IMAGE_TAG: ${{ steps.get-output.outputs.IMAGE_TAG }}
       ECR_REPOSITORY_EXTENSION: ${{ steps.get-output.outputs.ECR_REPOSITORY_EXTENSION }}
-    strategy:
-      matrix:
-        environment: ['test']
-    environment: ${{ matrix.environment }}
+      DIR_NAME: ${{ steps.get-test.outputs.DIR_NAME }}
+      TEST_NAMES: ${{ steps.get-test.outputs.TEST_NAMES }}    
+    environment: test
 
     steps:
       - name: setup AWS CLI
@@ -73,10 +72,8 @@ jobs:
         password: ${{ needs.setup.outputs.ECR_LOGIN_PASSWORD }}
     strategy:
       matrix:
-        # dir_name: ["cuda", "fpga", ...]
-        dir_name: ["rest", "grpc"]
-        environment: ['test']
-    environment: ${{ matrix.environment }}
+        dir_name: ["rest"] # ["grpc", "cuda", "fpga", ...]
+    environment: test
 
     env:      
       AWS_REGION_NAME: ${{ vars.AWS_REGION_NAME }}
@@ -88,6 +85,7 @@ jobs:
       GITHUB_TOKEN: ${{ secrets.GH_TERRA_TOKEN }}
       DOMAIN_NAME: ${{ vars.DOMAIN_NAME }}
       DOMAIN_SUFFIX: ${{ vars.DOMAIN_SUFFIX }}
+      VPC_ID: ${{ vars.VPC_ID }}
 
     steps:
       - name: Checkout
@@ -101,13 +99,46 @@ jobs:
       - name: Setup Test
         run: |
           make -f test/Makefile prepare
+      - name: Run Test
+        run: |
+          cd test
+          go mod download
+          DIR_NAME=./microservice/${{ matrix.dir_name }}
+          exitCode=0
+          files=$(find $DIR_NAME -type f -name "*_test.go")
+          for file in $files; do
+            tests=$(grep -h -Eo 'func\s+Test[A-Za-z_0-9]+\(' $file | sed -E 's/func\s+([A-Za-z_0-9]+)\(.*$/\1/')
+            for test in $tests; do
 
-          ABS_TEST_DIR_NAME=./test/microservice/${{ matrix.dir_name }}
+              echo Running $test  
+              exitCodeTest=$(go test -timeout 60m -p 1 -v -run $test $DIR_NAME > test_results.txt; echo $?)
 
-          # test and clean
-          go test -timeout 60m -p 1 -v -cover $ABS_TEST_DIR_NAME
+              if [ $exitCodeTest -eq 0  ]; then
+                echo -e '::group::\033[42mSUCCESSFUL\033[0m Click to view test logs'
+              else
+                exitCode=$exitCodeTest
+                echo -e '::group::\033[42mFAILURE\033[0m Click to view test logs'
+              fi
+              cat test_results.txt
+              echo "::endgroup::"
+              
+              if [ $exitCodeTest -ne 0  ]; then
+                # extra cleanup in case the test goes over the timeout
+                export SKIP_deploy=true
+                export SKIP_validate=true
 
-          # double cleaning check
-          export SKIP_deploy=true
-          export SKIP_validate=true
-          go test -timeout 60m -p 1 -v -cover $ABS_TEST_DIR_NAME
+                exitCodeCleanup=$(go test -timeout 60m -p 1 -v -run $test $DIR_NAME > test_cleanup_results.txt; echo $?)
+
+                if [ $exitCodeCleanup -eq 0 ]; then                
+                  echo -e '::group::\033[42mSUCCESSFUL\033[0m Click to view cleanup logs'
+                else
+                  exitCode=$exitCodeCleanup
+                  echo -e '::group::\033[42mFAILURE\033[0m Click to view cleanup logs'
+                fi
+                cat test_cleanup_results.txt
+                echo "::endgroup::"
+              fi 
+
+            done
+          done
+          exit $exitCode

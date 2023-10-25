@@ -1,4 +1,4 @@
-package microservice_test
+package rest_test
 
 import (
 	"fmt"
@@ -154,7 +154,6 @@ func Test_Unit_Microservice_Rest_ECS_Fargate_Httpd(t *testing.T) {
 		terraform.Apply(t, options)
 	})
 	terratestStructure.RunTestStage(t, "validate", func() {
-		// TODO: test that /etc/ecs/ecs.config is not empty, requires key_name coming from terratest maybe
 		serviceName := util.Format("-", name, serviceNameSuffix)
 		testAwsModule.ValidateMicroservice(t, name, deployment, serviceName)
 		testAwsModule.ValidateRestEndpoints(t, microservicePath, deployment, traffics_many_ingress_many_egress, name, "")
@@ -266,7 +265,6 @@ func Test_Unit_Microservice_Rest_ECS_EC2_Httpd(t *testing.T) {
 		terraform.Apply(t, options)
 	})
 	terratestStructure.RunTestStage(t, "validate", func() {
-		// TODO: test that /etc/ecs/ecs.config is not empty, requires key_name coming from terratest maybe
 		serviceName := util.Format("-", name, serviceNameSuffix)
 		testAwsModule.ValidateMicroservice(t, name, deployment, serviceName)
 		testAwsModule.ValidateRestEndpoints(t, microservicePath, deployment, traffics_many_ingress_many_egress, name, "")

@@ -1,4 +1,4 @@
-package microservice_test
+package rest_test
 
 // import (
 // 	"fmt"
@@ -120,7 +120,6 @@ package microservice_test
 // 		terraform.Apply(t, options)
 // 	})
 // 	// terratestStructure.RunTestStage(t, "validate", func() {
-// 	// 	// TODO: test that /etc/ecs/ecs.config is not empty, requires key_name coming from terratest maybe
 // 	// 	serviceName := util.Format("-", name, serviceNameSuffix)
 // 	// 	testAwsModule.ValidateMicroservice(t, name, deployment, serviceName)
 // 	// 	testAwsModule.ValidateRestEndpoints(t, microservicePath, deployment, traffics, name, "")
