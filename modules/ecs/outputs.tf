@@ -17,20 +17,6 @@ output "acm" {
   }
 }
 
-output "meeeeeeeee" {
-  value = [for target in distinct(flatten([for container in var.ecs.service.task.containers : [for traffic in container.traffics : {
-    port             = traffic.target.port
-    protocol         = traffic.target.protocol
-    protocol_version = traffic.target.protocol_version
-    }]])) : {
-    containerPort = target.port
-    hostPort      = var.ecs.service.ec2 != null ? 0 : target.port // "host" network can use target port 
-    name          = join("-", ["container", target.protocol, target.port])
-    protocol      = target.protocol_version == "grpc" ? "tcp" : target.protocol // TODO: local.layer7_to_layer4_mapping[target.protocol]
-    }
-  ]
-}
-
 output "route53" {
   value = {
     records = {

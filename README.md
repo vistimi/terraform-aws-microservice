@@ -40,7 +40,7 @@ To see which specific instances are supported, please check [instances](). Feel 
 ## Examples
 
 Go check the [examples](https://github.com/vistimi/terraform-aws-microservice/tree/trunk/examples)
-Go check the [tests](https://github.com/vistimi/terraform-aws-microservice/tree/trunk/test/microservice)
+Go check the [tests](https://github.com/vistimi/terraform-aws-microservice/tree/trunk/tests/microservice)
 
 ## ECS vs EKS equivalent
 

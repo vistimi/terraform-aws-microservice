@@ -13,10 +13,11 @@ AWS_ACCOUNT_ID=***
 AWS_ACCESS_KEY=***
 AWS_SECRET_KEY=***
 
+TF_VAR_branch_name=trunk
 # the name of the VPC to use
-VPC_ID=***
+TF_VAR_vpc_id=vpc-0e1e39d24e51100b1
 
 # if you want to use route53
-DOMAIN_NAME=name
-DOMAIN_SUFFIX=com
+TF_VAR_domain_name=vistimi
+TF_VAR_domain_suffix=com
 ```

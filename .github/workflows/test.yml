@@ -83,9 +83,10 @@ jobs:
       AWS_SECRET_KEY: ${{ secrets.AWS_SECRET_KEY }}
       GITHUB_OWNER: ${{ github.repository_owner }}
       GITHUB_TOKEN: ${{ secrets.GH_TERRA_TOKEN }}
-      DOMAIN_NAME: ${{ vars.DOMAIN_NAME }}
-      DOMAIN_SUFFIX: ${{ vars.DOMAIN_SUFFIX }}
-      VPC_ID: ${{ vars.VPC_ID }}
+      TF_VAR_branch_name: ${{ github.head_ref || github.ref_name }}
+      TF_VAR_vpc_id: ${{ vars.VPC_ID }}
+      TF_VAR_domain_name: ${{ vars.DOMAIN_NAME }}
+      TF_VAR_domain_suffix: ${{ vars.DOMAIN_SUFFIX }}
 
     steps:
       - name: Checkout
@@ -101,44 +102,47 @@ jobs:
           make -f test/Makefile prepare
       - name: Run Test
         run: |
-          cd test
-          go mod download
-          DIR_NAME=./microservice/${{ matrix.dir_name }}
+          terraform init
+
           exitCode=0
-          files=$(find $DIR_NAME -type f -name "*_test.go")
+          files=$(find tests -type f -name "*${{ matrix.dir_name }}*.tftest.hcl" -exec basename {} *.tftest.hcl \;)
           for file in $files; do
-            tests=$(grep -h -Eo 'func\s+Test[A-Za-z_0-9]+\(' $file | sed -E 's/func\s+([A-Za-z_0-9]+)\(.*$/\1/')
-            for test in $tests; do
 
-              echo Running $test  
-              exitCodeTest=$(go test -timeout 60m -p 1 -v -run $test $DIR_NAME > test_results.txt; echo $?)
+            exitCode=$(terraform test -filter=tests/$file -verbose; echo $?)           
 
-              if [ $exitCodeTest -eq 0  ]; then
-                echo -e '::group::\033[42mSUCCESSFUL\033[0m Click to view test logs'
-              else
-                exitCode=$exitCodeTest
-                echo -e '::group::\033[42mFAILURE\033[0m Click to view test logs'
-              fi
-              cat test_results.txt
-              echo "::endgroup::"
+
+            # tests=$(grep -h -Eo 'func\s+Test[A-Za-z_0-9]+\(' $file | sed -E 's/func\s+([A-Za-z_0-9]+)\(.*$/\1/')
+            # for test in $tests; do
+
+            #   echo Running $test  
+            #   exitCodeTest=$(go test -timeout 60m -p 1 -v -run $test $DIR_NAME > test_results.txt; echo $?)
+
+            #   if [ $exitCodeTest -eq 0  ]; then
+            #     echo -e '::group::\033[42mSUCCESSFUL\033[0m Click to view test logs'
+            #   else
+            #     exitCode=$exitCodeTest
+            #     echo -e '::group::\033[42mFAILURE\033[0m Click to view test logs'
+            #   fi
+            #   cat test_results.txt
+            #   echo "::endgroup::"
               
-              if [ $exitCodeTest -ne 0  ]; then
-                # extra cleanup in case the test goes over the timeout
-                export SKIP_deploy=true
-                export SKIP_validate=true
+            #   if [ $exitCodeTest -ne 0  ]; then
+            #     # extra cleanup in case the test goes over the timeout
+            #     export SKIP_deploy=true
+            #     export SKIP_validate=true
 
-                exitCodeCleanup=$(go test -timeout 60m -p 1 -v -run $test $DIR_NAME > test_cleanup_results.txt; echo $?)
+            #     exitCodeCleanup=$(go test -timeout 60m -p 1 -v -run $test $DIR_NAME > test_cleanup_results.txt; echo $?)
 
-                if [ $exitCodeCleanup -eq 0 ]; then                
-                  echo -e '::group::\033[42mSUCCESSFUL\033[0m Click to view cleanup logs'
-                else
-                  exitCode=$exitCodeCleanup
-                  echo -e '::group::\033[42mFAILURE\033[0m Click to view cleanup logs'
-                fi
-                cat test_cleanup_results.txt
-                echo "::endgroup::"
-              fi 
+            #     if [ $exitCodeCleanup -eq 0 ]; then                
+            #       echo -e '::group::\033[42mSUCCESSFUL\033[0m Click to view cleanup logs'
+            #     else
+            #       exitCode=$exitCodeCleanup
+            #       echo -e '::group::\033[42mFAILURE\033[0m Click to view cleanup logs'
+            #     fi
+            #     cat test_cleanup_results.txt
+            #     echo "::endgroup::"
+            #   fi 
 
-            done
+            # done
           done
           exit $exitCode

@@ -9,6 +9,12 @@ terraform {
       version = ">= 3.2.0"
     }
 
+    # Tests versions
+    random = {
+      source  = "hashicorp/random"
+      version = ">= 3.5.1"
+    }
+
     # Kubernetes versions
     # kubectl = {
     #   source  = "gavinbunney/kubectl"

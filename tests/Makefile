@@ -17,11 +17,8 @@ aws-auth:
 	aws configure set output 'text'
 	aws configure list
 
-test-clear: ## Clear the cache for the tests
-	go clean -testcache
-
 prepare:
-	cat <<-EOF > ${PATH_ABS_ROOT}/../provider_aws_override.tf
+	cat <<-EOF > ${PATH_ABS_ROOT}/provider_aws_override.tf
 	provider "aws" {
 		region = "${AWS_REGION_NAME}"
 		allowed_account_ids = ["${AWS_ACCOUNT_ID}"]

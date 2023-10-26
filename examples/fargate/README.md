@@ -1,0 +1,1 @@
+# Fargate example for the microservice
