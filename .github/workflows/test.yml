@@ -120,10 +120,11 @@ jobs:
           make -f test/Makefile prepare
       - name: Run Test
         run: |
-          terraform init
-
-          exitCode=0
           echo Running ${{ matrix.test_name }}
+
+          # exitCode=0
+          # make -f Makefile prepare
+          # terraform init
           # exitCodeTest=$(terraform test -filter=tests/${{ matrix.test_name }} -verbose > test_results.txt; echo $?)
           # if [ $exitCodeTest -eq 0  ]; then
           #   echo -e '::group::\033[42mSUCCESSFUL\033[0m Click to view test logs'

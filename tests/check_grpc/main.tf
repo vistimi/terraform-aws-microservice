@@ -28,7 +28,7 @@ resource "null_resource" "health_checks" {
   depends_on = [null_resource.grpcurl_download]
 }
 
-resource "null_resource" "grpcurl_download" {
+resource "null_resource" "grpcurl_clean" {
   provisioner "local-exec" {
     command = "rm grpcurl"
   }

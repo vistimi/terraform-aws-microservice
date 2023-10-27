@@ -15,7 +15,7 @@
 	"mounts": [
 		"source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind"
 	],
-	"postStartCommand": "export $(grep -v '^#' .devcontainer/devcontainer.env | xargs) && make -f tests/Makefile aws-auth && tflint --init",
+	"postStartCommand": "export $(grep -v '^#' .devcontainer/devcontainer.env | xargs) && make -f Makefile aws-auth && tflint --init",
 	"customizations": {
 		"vscode": {
 			"extensions": [

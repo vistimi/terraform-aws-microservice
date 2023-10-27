@@ -68,6 +68,30 @@ Scaling activity `<id>`: Failed: We currently do not have sufficient `<instance_
 
 It means that not available instances in the available zones. Unfortunately AWS does not have enough capacity in some regions. A possible solution would be to retry deploying the microservice until it is successful.
 
+## Makefile
+
+If the env variables are not defined:
+```sh
+make aws-auth AWS_ACCESS_KEY=*** AWS_SECRET_KEY=*** AWS_REGION_NAME=***
+make prepare AWS_ACCOUNT_ID=*** AWS_REGION_NAME=***
+```
+
+otherwise:
+```sh
+make aws-auth
+make prepare
+```
+
+Then:
+```sh
+go test -p 1
+```
+
+If you want to test again without the cache result:
+```sh
+make test-clear
+```
+
 ## License
 
 See [LICENSE](https://github.com/vistimi/terraform-aws-microservice/tree/trunk/LICENSE) for full details.
