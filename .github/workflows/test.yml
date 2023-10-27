@@ -72,17 +72,17 @@ jobs:
             files+="$(find tests -type f -name "*$test_type*.tftest.hcl" -exec basename {} *.tftest.hcl \;) "
           done
 
-          transformed_string="["
+          transformed_string=""
           for file in $files; do
             transformed_string+="\"$file\","
           done
           # Remove the trailing comma and close the square brackets
           transformed_string=${transformed_string%,}
-          transformed_string+="]"
+          # transformed_string+=""
 
           echo $transformed_string
           echo $files
-          echo TEST_NAMES="$files" >> $GITHUB_OUTPUT
+          echo TEST_NAMES="$transformed_string" >> $GITHUB_OUTPUT
 
   test:
     needs: [setup]
