@@ -127,6 +127,8 @@ jobs:
       - name: Run Test
         run: |
           echo Running ${{ matrix.test_name }}
+          ls
+          ls tests
           terraform test -filter=tests/${{ matrix.test_name }}
 
           # exitCode=0
