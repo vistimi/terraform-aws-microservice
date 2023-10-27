@@ -67,10 +67,10 @@ jobs:
       - name: Get tests
         id: get-tests
         run: |
-          files =""
+          files=""
           for test_type in $TESTS_TYPES; do
             files+="$(find tests -type f -name "*$test_type*.tftest.hcl" -exec basename {} *.tftest.hcl \;) "
-          done          
+          done
 
           transformed_string="["
           for file in files; do
