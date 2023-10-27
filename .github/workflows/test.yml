@@ -110,23 +110,29 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+
       - name: Versions
         run: |
           terraform --version
+
       - name: Setup AWS CLI
         run: |
-          make -f test/Makefile aws-auth
+          make -f Makefile aws-auth
+
       - name: Setup Test
         run: |
-          make -f test/Makefile prepare
+          make -f Makefile prepare
+          terraform init
+
       - name: Run Test
         run: |
           echo Running ${{ matrix.test_name }}
+          # terraform test -filter=tests/${{ matrix.test_name }}
 
           # exitCode=0
-          # make -f Makefile prepare
-          # terraform init
-          # exitCodeTest=$(terraform test -filter=tests/${{ matrix.test_name }} -verbose > test_results.txt; echo $?)
+          # files="test1 test2 test3"
+          # for file in $files; do
+          # exitCodeTest=$(run test here > test_results.txt; echo $?)
           # if [ $exitCodeTest -eq 0  ]; then
           #   echo -e '::group::\033[42mSUCCESSFUL\033[0m Click to view test logs'
           # else
@@ -135,8 +141,5 @@ jobs:
           # fi
           # cat test_results.txt
           # echo "::endgroup::"
-
-          # files=$(find tests -type f -name "*${{ matrix.dir_name }}*.tftest.hcl" -exec basename {} *.tftest.hcl \;)
-          # for file in $files; do
           # done
-          exit $exitCode
+          # exit $exitCode
