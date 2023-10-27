@@ -90,11 +90,6 @@ run "microservice" {
       tag_tier = "public"
     }
     orchestrator = var.orchestrator
-    tags = {
-      TestID    = run.random_id.id
-      AccountID = run.aws.account_id
-      UserName  = run.aws.user_name
-    }
   }
 
   module {

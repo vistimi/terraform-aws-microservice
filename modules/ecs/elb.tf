@@ -51,7 +51,7 @@ module "route53_records" {
   zone_name = each.key
   record = {
     subdomain_name = var.route53.record.subdomain_name
-    prefixes       = var.route53.record.prefixes
+    prefixes     = var.route53.record.prefixes
     type           = "A"
     alias = {
       name    = "dualstack.${module.elb.lb.dns_name}"

@@ -1,3 +1,3 @@
-output "health_check" {
-  value = null_resource.grpc_health_check
+output "health_checks" {
+  value = null_resource.health_checks
 }

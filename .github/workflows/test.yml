@@ -28,8 +28,7 @@ jobs:
       ECR_REGISTRY_URI: ${{ steps.get-output.outputs.ECR_REGISTRY_URI }}
       IMAGE_TAG: ${{ steps.get-output.outputs.IMAGE_TAG }}
       ECR_REPOSITORY_EXTENSION: ${{ steps.get-output.outputs.ECR_REPOSITORY_EXTENSION }}
-      DIR_NAME: ${{ steps.get-test.outputs.DIR_NAME }}
-      TEST_NAMES: ${{ steps.get-test.outputs.TEST_NAMES }}    
+      TEST_NAMES: ${{ steps.get-tests.outputs.TEST_NAMES }}    
     environment: test
 
     steps:
@@ -62,6 +61,24 @@ jobs:
           echo "ECR_REGISTRY_URI=$ECR_REGISTRY_URI" >> $GITHUB_OUTPUT
           echo using docker image::: $ECR_REGISTRY_URI/$ECR_REPOSITORY_NAME$ECR_REPOSITORY_EXTENSION:$IMAGE_TAG
 
+      - name: Get tests
+        id: get-tests
+        run: |
+          files=$(find tests -type f -name "*rest*.tftest.hcl" -exec basename {} *.tftest.hcl \;)
+
+          transformed_string="["
+
+          for file in files; do
+            transformed_string+="\"$file\","
+          done
+
+          # Remove the trailing comma and close the square brackets
+          transformed_string=${transformed_string%,}
+          transformed_string+="]"
+
+          echo $transformed_string
+          echo "TEST_NAMES=$transformed_string" >> $GITHUB_OUTPUT
+
   test:
     needs: [setup]
     runs-on: ubuntu-latest
@@ -72,7 +89,8 @@ jobs:
         password: ${{ needs.setup.outputs.ECR_LOGIN_PASSWORD }}
     strategy:
       matrix:
-        dir_name: ["rest"] # ["grpc", "cuda", "fpga", ...]
+        # dir_name: ["rest"] # ["grpc", "cuda", "fpga", ...]
+        test_name: ${{ toJson(needs.setup.outputs.TEST_NAMES) }}
     environment: test
 
     env:      
@@ -105,44 +123,18 @@ jobs:
           terraform init
 
           exitCode=0
-          files=$(find tests -type f -name "*${{ matrix.dir_name }}*.tftest.hcl" -exec basename {} *.tftest.hcl \;)
-          for file in $files; do
+          echo Running ${{ matrix.test_name }}
+          # exitCodeTest=$(terraform test -filter=tests/${{ matrix.test_name }} -verbose > test_results.txt; echo $?)
+          # if [ $exitCodeTest -eq 0  ]; then
+          #   echo -e '::group::\033[42mSUCCESSFUL\033[0m Click to view test logs'
+          # else
+          # exitCode=$exitCodeTest
+          #   echo -e '::group::\033[42mFAILURE\033[0m Click to view test logs'
+          # fi
+          # cat test_results.txt
+          # echo "::endgroup::"
 
-            exitCode=$(terraform test -filter=tests/$file -verbose; echo $?)           
-
-
-            # tests=$(grep -h -Eo 'func\s+Test[A-Za-z_0-9]+\(' $file | sed -E 's/func\s+([A-Za-z_0-9]+)\(.*$/\1/')
-            # for test in $tests; do
-
-            #   echo Running $test  
-            #   exitCodeTest=$(go test -timeout 60m -p 1 -v -run $test $DIR_NAME > test_results.txt; echo $?)
-
-            #   if [ $exitCodeTest -eq 0  ]; then
-            #     echo -e '::group::\033[42mSUCCESSFUL\033[0m Click to view test logs'
-            #   else
-            #     exitCode=$exitCodeTest
-            #     echo -e '::group::\033[42mFAILURE\033[0m Click to view test logs'
-            #   fi
-            #   cat test_results.txt
-            #   echo "::endgroup::"
-              
-            #   if [ $exitCodeTest -ne 0  ]; then
-            #     # extra cleanup in case the test goes over the timeout
-            #     export SKIP_deploy=true
-            #     export SKIP_validate=true
-
-            #     exitCodeCleanup=$(go test -timeout 60m -p 1 -v -run $test $DIR_NAME > test_cleanup_results.txt; echo $?)
-
-            #     if [ $exitCodeCleanup -eq 0 ]; then                
-            #       echo -e '::group::\033[42mSUCCESSFUL\033[0m Click to view cleanup logs'
-            #     else
-            #       exitCode=$exitCodeCleanup
-            #       echo -e '::group::\033[42mFAILURE\033[0m Click to view cleanup logs'
-            #     fi
-            #     cat test_cleanup_results.txt
-            #     echo "::endgroup::"
-            #   fi 
-
-            # done
-          done
+          # files=$(find tests -type f -name "*${{ matrix.dir_name }}*.tftest.hcl" -exec basename {} *.tftest.hcl \;)
+          # for file in $files; do
+          # done
           exit $exitCode

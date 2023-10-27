@@ -66,6 +66,7 @@ module "ecs" {
       #------------
       # Service
       #------------
+      wait_for_steady_state      = true
       force_new_deployment       = true
       launch_type                = var.ecs.service.ec2 != null ? "EC2" : "FARGATE"
       enable_autoscaling         = true
@@ -105,18 +106,6 @@ module "ecs" {
       # security group
       subnet_ids = var.vpc.subnet_tier_ids
       security_group_rules = merge(
-        # {
-        #   # keys need to be known at build time
-        #   //FIXME:
-        #   for target in local.targets : join("-", ["elb", "ingress", target.protocol, target.port]) => {
-        #     type                     = "ingress"
-        #     from_port                = target.port
-        #     to_port                  = target.port
-        #     protocol                 = local.layer7_to_layer4_mapping[target.protocol]
-        #     description              = "Service ${target.protocol} port ${target.port}"
-        #     source_security_group_id = module.elb.security_group.id
-        #   }
-        # },
         {
           ingress_all = {
             type                     = "ingress"

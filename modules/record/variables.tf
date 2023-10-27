@@ -7,7 +7,7 @@ variable "record" {
   description = "The record configuration"
   type = object({
     subdomain_name = string
-    extensions     = optional(list(string), [])
+    prefixes     = optional(list(string), [])
     type           = string
     alias = optional(object({
       name    = string

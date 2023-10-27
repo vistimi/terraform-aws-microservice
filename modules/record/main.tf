@@ -13,9 +13,9 @@ module "records" {
 
   # https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/ResourceRecordTypes.html
   records = [
-    for extension in setunion(compact(var.record.extensions), [""]) :
+    for prefix in setunion(compact(var.record.prefixes), [""]) :
     {
-      name           = trimprefix("${extension}.${var.record.subdomain_name}", ".")
+      name           = trimprefix("${prefix}.${var.record.subdomain_name}", ".")
       type           = var.record.type
       alias          = var.record.alias
       ttl            = var.record.ttl
