@@ -73,7 +73,6 @@ variable "orchestrator" {
 
         containers = list(object({
           name        = string
-          base        = optional(bool)
           cpu         = optional(number)
           memory      = optional(number)
           device_idxs = optional(list(number))
@@ -86,7 +85,7 @@ variable "orchestrator" {
               name = optional(string)
               ecr = optional(object({
                 privacy      = string
-                public_alias = optional(string)
+                public_alias = optional(string, "")
                 account_id   = optional(string)
                 region_name  = optional(string)
               }))
@@ -111,7 +110,7 @@ variable "orchestrator" {
               health_check_path = optional(string)
               status_code       = optional(string)
             })
-          })))
+          })), [])
           command                  = optional(list(string), [])
           entrypoint               = optional(list(string), [])
           readonly_root_filesystem = optional(bool)
@@ -188,15 +187,10 @@ variable "orchestrator" {
     error_message = "docker repository alias need when repository privacy is `public`"
   }
 
-  validation {
-    condition     = length(compact([for container in var.orchestrator.group.deployment.containers : container.base])) == 1 || length(var.orchestrator.group.deployment.containers) == 1
-    error_message = "containers must have one base or be unique"
-  }
-
   # container traffic listeners
   validation {
-    condition     = alltrue(flatten([for container in var.orchestrator.group.deployment.containers : [for traffic in container.traffics : contains(["http", "https", "tcp"], traffic.listener.protocol)]]))
-    error_message = "Listener protocol must be one of [http, https, tcp]"
+    condition     = alltrue(flatten([for container in var.orchestrator.group.deployment.containers : [for traffic in container.traffics : contains(["http", "https", "tcp", "udp", "tcp_udp", "ssl"], traffic.listener.protocol)]]))
+    error_message = "Listener protocol must be one of [http, https, tcp, udp, tcp_udp, ssl]"
   }
   validation {
     condition     = alltrue(flatten([for container in var.orchestrator.group.deployment.containers : [for traffic in container.traffics : traffic.listener.protocol_version != null ? contains(["http1", "http2", "grpc"], traffic.listener.protocol_version) : true]]))
@@ -205,8 +199,8 @@ variable "orchestrator" {
 
   # container traffic targets
   validation {
-    condition     = alltrue(flatten([for container in var.orchestrator.group.deployment.containers : [for traffic in container.traffics : contains(["http", "https", "tcp"], traffic.target.protocol) if try(traffic.target.protocol != null, traffic.target != null)]]))
-    error_message = "Target protocol must be one of [http, https, tcp]"
+    condition     = alltrue(flatten([for container in var.orchestrator.group.deployment.containers : [for traffic in container.traffics : contains(["http", "https", "tcp", "udp", "tcp_udp", "ssl"], traffic.target.protocol) if try(traffic.target.protocol != null, traffic.target != null)]]))
+    error_message = "Target protocol must be one of [http, https, tcp, udp, tcp_udp, ssl]"
   }
   validation {
     condition     = alltrue(flatten([for container in var.orchestrator.group.deployment.containers : [for traffic in container.traffics : contains(["http1", "http2", "grpc"], traffic.target.protocol_version) if try(traffic.target.protocol_version != null, traffic.target != null)]]))

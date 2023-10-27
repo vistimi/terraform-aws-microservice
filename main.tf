@@ -81,8 +81,8 @@ module "ecs" {
         os             = var.orchestrator.group.ec2.os
         os_version     = var.orchestrator.group.ec2.os_version
         capacities     = var.orchestrator.group.ec2.capacities
-        architecture   = one(values(local.instances)).architecture
-        chip_type      = one(values(local.instances)).chip_type
+        architecture   = values(local.instances)[0].architecture
+        chip_type      = values(local.instances)[0].chip_type
       } : null
       fargate = var.orchestrator.group.fargate != null ? {
         os           = var.orchestrator.group.fargate.os

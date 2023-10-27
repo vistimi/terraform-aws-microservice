@@ -48,4 +48,13 @@ locals {
     port             = traffic.listener.port
     protocol_version = traffic.listener.protocol_version
   }]]))
+
+  asgs = {
+    for obj in flatten([for instance_type in try(var.ecs.service.ec2.instance_types, []) : [for capacity in try(var.ecs.service.ec2.capacities, []) : {
+      instance_regex = regex("^(?P<prefix>\\w+)\\.(?P<size_number>\\d*x*)(?P<size_name>\\w+)$", instance_type)
+      instance_type  = instance_type
+      capacity       = capacity
+      }
+    ]]) : lower(join("-", compact([var.name, substr(obj.capacity.type, 0, 2), "${obj.instance_regex.prefix}-${obj.instance_regex.size_number}${substr(obj.instance_regex.size_name, 0, 1)}"]))) => { instance_type = obj.instance_type, capacity = obj.capacity }
+  }
 }
