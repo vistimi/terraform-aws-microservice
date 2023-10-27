@@ -82,7 +82,7 @@ jobs:
 
           echo $transformed_string
           echo $files
-          echo "TEST_NAMES=$files" >> $GITHUB_OUTPUT
+          echo TEST_NAMES="$files" >> $GITHUB_OUTPUT
 
   test:
     needs: [setup]
