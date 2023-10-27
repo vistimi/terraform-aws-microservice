@@ -15,6 +15,7 @@ env:
   ORGANIZATION_NAME: ${{ github.repository_owner }}
   BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
   ECR_REPOSITORY_EXTENSION: ''
+  TESTS_TYPES: "rest" # ["grpc", "cuda", "fpga", ...]
 
 jobs:
   setup:
@@ -61,17 +62,20 @@ jobs:
           echo "ECR_REGISTRY_URI=$ECR_REGISTRY_URI" >> $GITHUB_OUTPUT
           echo using docker image::: $ECR_REGISTRY_URI/$ECR_REPOSITORY_NAME$ECR_REPOSITORY_EXTENSION:$IMAGE_TAG
 
+      - name: Checkout
+        uses: actions/checkout@v3
       - name: Get tests
         id: get-tests
         run: |
-          files=$(find tests -type f -name "*rest*.tftest.hcl" -exec basename {} *.tftest.hcl \;)
+          files =""
+          for test_type in $TESTS_TYPES; do
+            files+="$(find tests -type f -name "*$test_type*.tftest.hcl" -exec basename {} *.tftest.hcl \;) "
+          done          
 
           transformed_string="["
-
           for file in files; do
             transformed_string+="\"$file\","
           done
-
           # Remove the trailing comma and close the square brackets
           transformed_string=${transformed_string%,}
           transformed_string+="]"
