@@ -74,15 +74,13 @@ jobs:
 
           transformed_string=""
           for file in $files; do
-            transformed_string+="\"$file\","
+            transformed_string+="{\"test_name\": \"$file\"},"            
           done
-          # Remove the trailing comma and close the square brackets
-          transformed_string=${transformed_string%,}
-          # transformed_string+=""
+          transformed_string=${transformed_string%,} # Remove the trailing comma and close the square brackets
 
           echo $transformed_string
           echo $files
-          echo TEST_NAMES="$transformed_string" >> $GITHUB_OUTPUT
+          echo TEST_NAMES={\"include\":[$MATRIX_PARAMS_COMBINATIONS]} >> $GITHUB_OUTPUT
 
   test:
     needs: [setup]
@@ -93,8 +91,7 @@ jobs:
         username: AWS
         password: ${{ needs.setup.outputs.ECR_LOGIN_PASSWORD }}
     strategy:
-      matrix:
-        test_name: ${{ fromJson(needs.setup.outputs.TEST_NAMES) }}
+      matrix: ${{ fromJson(needs.setup.outputs.TEST_NAMES) }}
     environment: test
 
     env:      
