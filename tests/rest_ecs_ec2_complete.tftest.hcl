@@ -138,7 +138,7 @@ run "microservice" {
   command = apply
 
   variables {
-    name = "rest-ecs-ec2-${run.random_id.id}"
+    name = "rest-ecs-ec2-com-${run.random_id.id}"
     vpc = {
       id       = run.get_env.vpc_id
       tag_tier = "public"
@@ -150,7 +150,7 @@ run "microservice" {
       }]
       record = {
         prefixes       = ["www"]
-        subdomain_name = "rest-ecs-ec2-${run.random_id.id}"
+        subdomain_name = "rest-ecs-ec2-com-${run.random_id.id}"
       }
     }
     bucket_env = var.bucket_env
@@ -188,7 +188,7 @@ run "check_rest" {
         response_status_codes = [200]
       },
       {
-        url = "http://${run.microservice.ecs.route53.records["${run.get_env.domain_name}.${run.get_env.domain_suffix}"].name["rest-ecs-ec2-${run.random_id.id} A"]}:80/"
+        url = "http://${run.microservice.ecs.route53.records["${run.get_env.domain_name}.${run.get_env.domain_suffix}"].name["rest-ecs-ec2-com-${run.random_id.id} A"]}:80/"
         header = {
           Accept = "application/json"
         }
@@ -197,7 +197,7 @@ run "check_rest" {
       },
 
       {
-        url = "http://${run.microservice.ecs.route53.records["${run.get_env.domain_name}.${run.get_env.domain_suffix}"].name["rest-ecs-ec2-${run.random_id.id} A"]}:81/"
+        url = "http://${run.microservice.ecs.route53.records["${run.get_env.domain_name}.${run.get_env.domain_suffix}"].name["rest-ecs-ec2-com-${run.random_id.id} A"]}:81/"
         header = {
           Accept = "application/json"
         }
@@ -205,7 +205,7 @@ run "check_rest" {
         response_status_codes = [200]
       },
       {
-        url = "https://${run.microservice.ecs.route53.records["${run.get_env.domain_name}.${run.get_env.domain_suffix}"].name["rest-ecs-ec2-${run.random_id.id} A"]}:443/"
+        url = "https://${run.microservice.ecs.route53.records["${run.get_env.domain_name}.${run.get_env.domain_suffix}"].name["rest-ecs-ec2-com-${run.random_id.id} A"]}:443/"
         header = {
           Accept = "application/json"
         }
@@ -213,7 +213,7 @@ run "check_rest" {
         response_status_codes = [200]
       },
       {
-        url = "https://www.${run.microservice.ecs.route53.records["${run.get_env.domain_name}.${run.get_env.domain_suffix}"].name["rest-ecs-ec2-${run.random_id.id} A"]}:443/"
+        url = "https://www.${run.microservice.ecs.route53.records["${run.get_env.domain_name}.${run.get_env.domain_suffix}"].name["rest-ecs-ec2-com-${run.random_id.id} A"]}:443/"
         header = {
           Accept = "application/json"
         }

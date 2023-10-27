@@ -83,7 +83,7 @@ run "microservice" {
   command = apply
 
   variables {
-    name = "rest-ecs-ec2-${run.random_id.id}"
+    name = "rest-ecs-ec2-a-${run.random_id.id}"
     vpc = {
       id       = run.get_env.vpc_id
       tag_tier = "public"
