@@ -79,8 +79,7 @@ jobs:
           transformed_string=${transformed_string%,} # Remove the trailing comma and close the square brackets
 
           echo $transformed_string
-          echo $files
-          echo TEST_NAMES={\"include\":[$MATRIX_PARAMS_COMBINATIONS]} >> $GITHUB_OUTPUT
+          echo TEST_NAMES={\"include\":[$transformed_string]} >> $GITHUB_OUTPUT
 
   test:
     needs: [setup]

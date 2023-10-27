@@ -169,25 +169,25 @@ run "check_grpc" {
     health_checks = [
       {
         request = "{\"name\": \"World\"}"
-        adress  = "${run.microservice.ecs.route53.records["${run.get_env.domain_name}.${run.get_env.domain_suffix}"].name["grpc-ecs-ec2-${run.random_id.id} A"]}:443/"
+        adress  = "${run.microservice.ecs.route53.records["${run.get_env.domain_name}.${run.get_env.domain_suffix}"].name["grpc-ecs-ec2-${run.random_id.id} A"]}:443"
         service = "helloworld.Greeter"
         method  = "SayHello"
       },
       {
         request = "{\"name\": \"World\"}"
-        adress  = "www.${run.microservice.ecs.route53.records["${run.get_env.domain_name}.${run.get_env.domain_suffix}"].name["grpc-ecs-ec2-${run.random_id.id} A"]}:443/"
+        adress  = "www.${run.microservice.ecs.route53.records["${run.get_env.domain_name}.${run.get_env.domain_suffix}"].name["grpc-ecs-ec2-${run.random_id.id} A"]}:443"
         service = "helloworld.Greeter"
         method  = "SayHello"
       },
       {
         request = "{\"name\": \"World\"}"
-        adress  = "${run.microservice.ecs.route53.records["${run.get_env.domain_name}.${run.get_env.domain_suffix}"].name["grpc-ecs-ec2-${run.random_id.id} A"]}:444/"
+        adress  = "${run.microservice.ecs.route53.records["${run.get_env.domain_name}.${run.get_env.domain_suffix}"].name["grpc-ecs-ec2-${run.random_id.id} A"]}:444"
         service = "helloworld.Greeter"
         method  = "SayHello"
       },
       {
         request = "{\"name\": \"World\"}"
-        adress  = "www.${run.microservice.ecs.route53.records["${run.get_env.domain_name}.${run.get_env.domain_suffix}"].name["grpc-ecs-ec2-${run.random_id.id} A"]}:444/"
+        adress  = "www.${run.microservice.ecs.route53.records["${run.get_env.domain_name}.${run.get_env.domain_suffix}"].name["grpc-ecs-ec2-${run.random_id.id} A"]}:444"
         service = "helloworld.Greeter"
         method  = "SayHello"
       },
