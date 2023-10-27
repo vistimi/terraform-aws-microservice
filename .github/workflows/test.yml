@@ -73,7 +73,7 @@ jobs:
           done
 
           transformed_string="["
-          for file in files; do
+          for file in $files; do
             transformed_string+="\"$file\","
           done
           # Remove the trailing comma and close the square brackets
