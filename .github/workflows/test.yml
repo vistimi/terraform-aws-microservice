@@ -81,7 +81,8 @@ jobs:
           transformed_string+="]"
 
           echo $transformed_string
-          echo "TEST_NAMES=$transformed_string" >> $GITHUB_OUTPUT
+          echo $files
+          echo "TEST_NAMES=$files" >> $GITHUB_OUTPUT
 
   test:
     needs: [setup]
@@ -93,8 +94,7 @@ jobs:
         password: ${{ needs.setup.outputs.ECR_LOGIN_PASSWORD }}
     strategy:
       matrix:
-        # dir_name: ["rest"] # ["grpc", "cuda", "fpga", ...]
-        test_name: ${{ toJson(needs.setup.outputs.TEST_NAMES) }}
+        test_name: ${{ fromJson(needs.setup.outputs.TEST_NAMES) }}
     environment: test
 
     env:      
