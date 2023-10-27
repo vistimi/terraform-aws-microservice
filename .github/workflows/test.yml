@@ -48,8 +48,7 @@ jobs:
 
           REPOSITORY_NAME=$(basename ${{ github.repository }})
 
-          # TODO: ECR_REPOSITORY_NAME=$(echo $REPOSITORY_NAME-$BRANCH_NAME | tr A-Z a-z)
-          ECR_REPOSITORY_NAME=$(echo $REPOSITORY_NAME-trunk | tr A-Z a-z)
+          ECR_REPOSITORY_NAME=$(echo $REPOSITORY_NAME-$BRANCH_NAME | tr A-Z a-z)
           echo "ECR_REPOSITORY_NAME=$ECR_REPOSITORY_NAME" >> $GITHUB_OUTPUT
 
           if [[ $ECR_PRIVACY == private ]]; then
@@ -127,8 +126,6 @@ jobs:
       - name: Run Test
         run: |
           echo Running ${{ matrix.test_name }}
-          ls
-          ls tests
           terraform test -filter=tests/${{ matrix.test_name }}
 
           # exitCode=0
