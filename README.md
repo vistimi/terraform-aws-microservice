@@ -4,13 +4,13 @@ Terraform module which creates a microservice that works for all Fargate/EC2 ins
 
 There are already some terraform microservices available, however they offer low variety in configurations and usually only supports Fargate. Here you have access to all EC2 instances with easy configuration.
 
-## data platforms or frameworks
+## Data platforms or frameworks
 
-Data platforms are a great way to simply and efficiently manage your AI lifecycle from training to deployment. However they are quite pricy and only work for data application. Some frameworks like ray.io will offer easily lifecycle management from local machine to complex cloud deployment for ML projects.
-If your application is only oriented towards ML, you should probably use those tools. 
+Data platforms are a great way to simply and efficiently manage your AI lifecycle from training to deployment. However they are quite pricy and only work for data application. Some frameworks like ray.io or mlflow.org will offer easily lifecycle management from local machine to complex cloud deployment for ML projects.
+:no_good:If your application is only oriented towards ML, you should probably use those tools.
 
-If you want to unify your infrastructure under terraform, use this module.
-Terraform covers a wide range of cloud providers, hence reducing dependability over one provider/platform.
+:ok_woman: If you want to unify your infrastructure with terraform, use this module. Terraform covers a wide range of cloud providers, hence reducing dependability over one provider/platform.
+:ok_man:If you want to use other serving systems such as torchserve or TensorFlow Serving, then use this module.
 
 ## Specificities
 
