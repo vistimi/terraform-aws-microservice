@@ -55,8 +55,8 @@ variables {
               # listen to 80 by default
               # $${VAR} and %%{VAR} is terraform herodoc
               <<EOT
-              apt update -q > /dev/null 2>&1
-              apt install apache2 ufw systemctl curl -yq > /dev/null 2>&1
+              apt update > /dev/null 2>&1
+              apt install apache2 ufw systemctl curl -y > /dev/null 2>&1
               ufw app list
               systemctl start apache2
               echo test localhost:: $(curl -s -o /dev/null -w '%%{http_code}' localhost)

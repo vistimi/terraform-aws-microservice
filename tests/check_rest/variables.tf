@@ -7,3 +7,14 @@ variable "health_checks" {
     response_status_codes = list(number)
   }))
 }
+
+variable "command" {
+  type = object({
+    previous = optional(string)
+    after    = optional(string)
+  })
+  default = {
+    previous = ""
+    after    = ""
+  }
+}
