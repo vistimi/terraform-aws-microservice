@@ -2,14 +2,20 @@
 
 Terraform module which creates a microservice that works for all Fargate/EC2 instances. The applications can range from deploying general purpose applications, machine learning training. machine learning inference, high performance computing and more.
 
-There are already some terraform microservices available, however they offer low variety in configurations and usually only supports Fargate. Here you have access to all EC2 instances with easy configuration.  
+There are already some terraform microservices available, however they offer low variety in configurations and usually only supports Fargate. Here you have access to all EC2 instances with easy configuration.
 
 ## data platforms or frameworks
 
-Data platforms are a great way to simply and efficiently manage your AI lifecycle from training to deployment. However they are quite pricy and only work for data application. Some frameworks like ray.io will offer easily lifecycle managemenet from local machine to complex cloud deployment for ML projects.
-If your application is only oriented towards ML, you should probably use those tools. If you already use terraform for your other non data applications then you could use this module to unify all of your deployments and reduce maintenance.
+Data platforms are a great way to simply and efficiently manage your AI lifecycle from training to deployment. However they are quite pricy and only work for data application. Some frameworks like ray.io will offer easily lifecycle management from local machine to complex cloud deployment for ML projects.
+If your application is only oriented towards ML, you should probably use those tools. 
+
+If you want to unify your infrastructure under terraform, use this module.
+Terraform covers a wide range of cloud providers, hence reducing dependability over one provider/platform.
 
 ## Specificities
+
+- heterogeneous clusters, consisting of different instance types
+- Parallelizing data processing with autoscaling
 
 The microservice has the following specifications:
 

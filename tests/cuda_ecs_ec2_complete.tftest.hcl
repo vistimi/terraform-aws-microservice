@@ -55,6 +55,7 @@ variables {
             }
             traffics = [
               # add an api or visualization tool to monitor the training
+              # tensorboard or else
             ]
             entrypoint = ["/bin/bash", "-c"]
             command = [
