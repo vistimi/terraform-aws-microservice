@@ -1,11 +1,15 @@
 # AWS microservice terraform module
 
-Terraform module which creates a microservice that works for all EC2 instances. The applications can range from deploying general purpose applications, machine learning training. machine learning inference, high performance computing and more.
+Terraform module which creates a microservice that works for all Fargate/EC2 instances. The applications can range from deploying general purpose applications, machine learning training. machine learning inference, high performance computing and more.
 
-The purpose is to unify under one confguration a general purpose deployment to reduce the technical debt on the infrastructure. It is a simple, safe and scalable way to deploy applications with containers.
-it is also a great alternative to Sagemaker, it will be 40% cheaper but will require some work on the infrastructure for deploying it.
+There are already some terraform microservices available, however they offer low variety in configurations and usually only supports Fargate. Here you have access to all EC2 instances with easy configuration.  
 
-The configuration aims to support Kubernetes and have the same modules for other cloud providers.
+## data platforms or frameworks
+
+Data platforms are a great way to simply and efficiently manage your AI lifecycle from training to deployment. However they are quite pricy and only work for data application. Some frameworks like ray.io will offer easily lifecycle managemenet from local machine to complex cloud deployment for ML projects.
+If your application is only oriented towards ML, you should probably use those tools. If you already use terraform for your other non data applications then you could use this module to unify all of your deployments and reduce maintenance.
+
+## Specificities
 
 The microservice has the following specifications:
 
@@ -24,9 +28,9 @@ The microservice has the following specifications:
           - [x] Compute Optimized
           - [x] Memory Optimized
           - [x] Accelerated Computing (GPU, Inferentia, Trainium)
-          - [ ] Accelerated Computing (Gaudi) config not ok/not tested
-          - [ ] Storage Optimized: config ok/not tested
-          - [ ] HPC Optimized: config ok/not tested
+          - [ ] Accelerated Computing (Gaudi) not supported
+          - [ ] Storage Optimized: supported/not tested
+          - [ ] HPC Optimized: supported/not tested
     - [ ] EKS
         - [ ] Fargate
         - [ ] EC2
@@ -80,16 +84,6 @@ otherwise:
 ```sh
 make aws-auth
 make prepare
-```
-
-Then:
-```sh
-go test -p 1
-```
-
-If you want to test again without the cache result:
-```sh
-make test-clear
 ```
 
 ## License

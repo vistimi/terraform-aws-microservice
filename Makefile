@@ -10,14 +10,14 @@ PATH_ABS_ROOT=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 fmt: ## Format all files
 	terraform fmt -recursive
 
-aws-auth:
+aws-auth: ## Add credentials
 	aws configure set aws_access_key_id ${AWS_ACCESS_KEY}
 	aws configure set aws_secret_access_key ${AWS_SECRET_KEY}
 	aws configure set region ${AWS_REGION_NAME}
 	aws configure set output 'text'
 	aws configure list
 
-prepare:
+prepare: ## create temporary provider files
 	cat <<-EOF > ${PATH_ABS_ROOT}/provider_aws_override.tf
 	provider "aws" {
 		region = "${AWS_REGION_NAME}"
