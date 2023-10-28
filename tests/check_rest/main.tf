@@ -1,9 +1,3 @@
-# resource "null_resource" "wait" {
-#   provisioner "local-exec" {
-#     command = " sleep 1m"
-#   }
-# }
-
 resource "time_sleep" "wait" {
   create_duration = "90s"
 }

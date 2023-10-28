@@ -15,7 +15,7 @@ env:
   ORGANIZATION_NAME: ${{ github.repository_owner }}
   BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
   ECR_REPOSITORY_EXTENSION: ''
-  TESTS_TYPES: "rest" # ["grpc", "cuda", "fpga", ...]
+  TESTS_TYPES: "rest variables" # grpc cuda fpga ...
 
 jobs:
   setup:

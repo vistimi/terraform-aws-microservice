@@ -54,15 +54,7 @@ variables {
               }
             }
             traffics = [
-              {
-                listener = {
-                  protocol = "http"
-                }
-                target = {
-                  port              = 3000
-                  health_check_path = "/"
-                }
-              },
+              # add an api or visualization tool to monitor the training
             ]
             entrypoint = ["/bin/bash", "-c"]
             command = [
@@ -110,45 +102,5 @@ run "microservice" {
 
   module {
     source = "./"
-  }
-}
-
-run "check_rest" {
-  command = apply
-
-  variables {
-    health_checks = [
-      {
-        url = "http://${run.microservice.ecs.elb.lb.dns_name}:8080/ping"
-        header = {
-          Accept = "application/json"
-        }
-        method                = "GET"
-        response_status_codes = [200]
-      },
-      {
-        url = "http://${run.microservice.ecs.elb.lb.dns_name}:8081/models"
-        header = {
-          Accept = "application/json"
-        }
-        method                = "GET"
-        response_status_codes = [200]
-      },
-      {
-        url = "http://${run.microservice.ecs.elb.lb.dns_name}:8082/metrics"
-        header = {
-          Accept = "application/json"
-        }
-        method                = "GET"
-        response_status_codes = [200]
-      },
-    ]
-    command = {
-      after = "curl -O https://s3.amazonaws.com/model-server/inputs/kitten.jpg; curl -v -X POST http://${run.microservice.ecs.elb.lb.dns_name}:8080/predictions/densenet161 -T kitten.jpg; rm kitten.jpg"
-    }
-  }
-
-  module {
-    source = "./tests/check_rest"
   }
 }

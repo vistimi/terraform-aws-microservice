@@ -10,11 +10,11 @@ variable "health_checks" {
 
 variable "command" {
   type = object({
-    previous = optional(string)
-    after    = optional(string)
+    previous = optional(string, "echo nothing to do")
+    after    = optional(string, "echo nothing to do")
   })
   default = {
-    previous = ""
-    after    = ""
+    previous = "echo nothing to do"
+    after    = "echo nothing to do"
   }
 }
