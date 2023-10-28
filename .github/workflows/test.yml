@@ -15,6 +15,7 @@ env:
   ORGANIZATION_NAME: ${{ github.repository_owner }}
   BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
   ECR_REPOSITORY_EXTENSION: ''
+  TESTS_TYPES: "rest variables" # grpc cuda fpga ...
 
 jobs:
   setup:
@@ -28,8 +29,7 @@ jobs:
       ECR_REGISTRY_URI: ${{ steps.get-output.outputs.ECR_REGISTRY_URI }}
       IMAGE_TAG: ${{ steps.get-output.outputs.IMAGE_TAG }}
       ECR_REPOSITORY_EXTENSION: ${{ steps.get-output.outputs.ECR_REPOSITORY_EXTENSION }}
-      DIR_NAME: ${{ steps.get-test.outputs.DIR_NAME }}
-      TEST_NAMES: ${{ steps.get-test.outputs.TEST_NAMES }}    
+      TEST_NAMES: ${{ steps.get-tests.outputs.TEST_NAMES }}    
     environment: test
 
     steps:
@@ -62,6 +62,23 @@ jobs:
           echo "ECR_REGISTRY_URI=$ECR_REGISTRY_URI" >> $GITHUB_OUTPUT
           echo using docker image::: $ECR_REGISTRY_URI/$ECR_REPOSITORY_NAME$ECR_REPOSITORY_EXTENSION:$IMAGE_TAG
 
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Get tests
+        id: get-tests
+        run: |
+          files=""
+          for test_type in $TESTS_TYPES; do
+            files+="$(find tests -type f -name "*$test_type*.tftest.hcl" -exec basename {} *.tftest.hcl \;) "
+          done
+
+          transformed_files=""
+          for file in $files; do
+            transformed_files+="{\"test_name\": \"$file\"},"            
+          done
+          transformed_files=${transformed_files%,} # Remove the trailing comma and close the square brackets
+          echo TEST_NAMES={\"include\":[$transformed_files]} >> $GITHUB_OUTPUT
+
   test:
     needs: [setup]
     runs-on: ubuntu-latest
@@ -71,8 +88,7 @@ jobs:
         username: AWS
         password: ${{ needs.setup.outputs.ECR_LOGIN_PASSWORD }}
     strategy:
-      matrix:
-        dir_name: ["rest"] # ["grpc", "cuda", "fpga", ...]
+      matrix: ${{ fromJson(needs.setup.outputs.TEST_NAMES) }}
     environment: test
 
     env:      
@@ -83,62 +99,44 @@ jobs:
       AWS_SECRET_KEY: ${{ secrets.AWS_SECRET_KEY }}
       GITHUB_OWNER: ${{ github.repository_owner }}
       GITHUB_TOKEN: ${{ secrets.GH_TERRA_TOKEN }}
-      DOMAIN_NAME: ${{ vars.DOMAIN_NAME }}
-      DOMAIN_SUFFIX: ${{ vars.DOMAIN_SUFFIX }}
-      VPC_ID: ${{ vars.VPC_ID }}
+      TF_VAR_branch_name: ${{ github.head_ref || github.ref_name }}
+      TF_VAR_vpc_id: ${{ vars.VPC_ID }}
+      TF_VAR_domain_name: ${{ vars.DOMAIN_NAME }}
+      TF_VAR_domain_suffix: ${{ vars.DOMAIN_SUFFIX }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+
       - name: Versions
         run: |
           terraform --version
+
       - name: Setup AWS CLI
         run: |
-          make -f test/Makefile aws-auth
+          make -f Makefile aws-auth
+
       - name: Setup Test
         run: |
-          make -f test/Makefile prepare
+          make -f Makefile prepare
+          terraform init
+
       - name: Run Test
         run: |
-          cd test
-          go mod download
-          DIR_NAME=./microservice/${{ matrix.dir_name }}
-          exitCode=0
-          files=$(find $DIR_NAME -type f -name "*_test.go")
-          for file in $files; do
-            tests=$(grep -h -Eo 'func\s+Test[A-Za-z_0-9]+\(' $file | sed -E 's/func\s+([A-Za-z_0-9]+)\(.*$/\1/')
-            for test in $tests; do
+          echo Running ${{ matrix.test_name }}
+          terraform test -filter=tests/${{ matrix.test_name }}
 
-              echo Running $test  
-              exitCodeTest=$(go test -timeout 60m -p 1 -v -run $test $DIR_NAME > test_results.txt; echo $?)
-
-              if [ $exitCodeTest -eq 0  ]; then
-                echo -e '::group::\033[42mSUCCESSFUL\033[0m Click to view test logs'
-              else
-                exitCode=$exitCodeTest
-                echo -e '::group::\033[42mFAILURE\033[0m Click to view test logs'
-              fi
-              cat test_results.txt
-              echo "::endgroup::"
-              
-              if [ $exitCodeTest -ne 0  ]; then
-                # extra cleanup in case the test goes over the timeout
-                export SKIP_deploy=true
-                export SKIP_validate=true
-
-                exitCodeCleanup=$(go test -timeout 60m -p 1 -v -run $test $DIR_NAME > test_cleanup_results.txt; echo $?)
-
-                if [ $exitCodeCleanup -eq 0 ]; then                
-                  echo -e '::group::\033[42mSUCCESSFUL\033[0m Click to view cleanup logs'
-                else
-                  exitCode=$exitCodeCleanup
-                  echo -e '::group::\033[42mFAILURE\033[0m Click to view cleanup logs'
-                fi
-                cat test_cleanup_results.txt
-                echo "::endgroup::"
-              fi 
-
-            done
-          done
-          exit $exitCode
+          # exitCode=0
+          # files="test1 test2 test3"
+          # for file in $files; do
+          # exitCodeTest=$(run test here > test_results.txt; echo $?)
+          # if [ $exitCodeTest -eq 0  ]; then
+          #   echo -e '::group::\033[42mSUCCESSFUL\033[0m Click to view test logs'
+          # else
+          # exitCode=$exitCodeTest
+          #   echo -e '::group::\033[42mFAILURE\033[0m Click to view test logs'
+          # fi
+          # cat test_results.txt
+          # echo "::endgroup::"
+          # done
+          # exit $exitCode

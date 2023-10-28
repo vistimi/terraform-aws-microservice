@@ -40,20 +40,20 @@ module "ecs" {
     }
   }, {})
   autoscaling_capacity_providers = {
-    for capacity in try(var.ecs.service.ec2.capacities, []) :
-    "${var.name}-${capacity.type}" => {
-      name                   = "${var.name}-${capacity.type}"
-      auto_scaling_group_arn = one(values(module.asg)).autoscaling.group_arn
+    for key, asg in local.asgs :
+    "${key}" => {
+      name                   = key
+      auto_scaling_group_arn = module.asg[key].autoscaling.group_arn
       managed_scaling = {
         // https://docs.aws.amazon.com/AmazonECS/latest/developerguide/service-quotas.html
-        maximum_scaling_step_size = capacity.maximum_scaling_step_size == null ? max(min(ceil((var.ecs.service.task.max_size - var.ecs.service.task.min_size) / 3), 10), 1) : capacity.maximum_scaling_step_size
-        minimum_scaling_step_size = capacity.minimum_scaling_step_size == null ? max(min(floor((var.ecs.service.task.max_size - var.ecs.service.task.min_size) / 10), 10), 1) : capacity.minimum_scaling_step_size
-        target_capacity           = capacity.target_capacity_cpu_percent # utilization for the capacity provider
+        maximum_scaling_step_size = asg.capacity.maximum_scaling_step_size == null ? max(min(ceil((var.ecs.service.task.max_size - var.ecs.service.task.min_size) / 3), 10), 1) : asg.capacity.maximum_scaling_step_size
+        minimum_scaling_step_size = asg.capacity.minimum_scaling_step_size == null ? max(min(floor((var.ecs.service.task.max_size - var.ecs.service.task.min_size) / 10), 10), 1) : asg.capacity.minimum_scaling_step_size
+        target_capacity           = asg.capacity.target_capacity_cpu_percent # utilization for the capacity provider
         status                    = "ENABLED"
         instance_warmup_period    = 300
         default_capacity_provider_strategy = {
-          base   = capacity.base
-          weight = capacity.weight
+          base   = asg.capacity.base
+          weight = asg.capacity.weight
         }
       }
       managed_termination_protection = "DISABLED"
@@ -66,6 +66,7 @@ module "ecs" {
       #------------
       # Service
       #------------
+      wait_for_steady_state      = true
       force_new_deployment       = true
       launch_type                = var.ecs.service.ec2 != null ? "EC2" : "FARGATE"
       enable_autoscaling         = true
@@ -105,18 +106,6 @@ module "ecs" {
       # security group
       subnet_ids = var.vpc.subnet_tier_ids
       security_group_rules = merge(
-        # {
-        #   # keys need to be known at build time
-        #   //FIXME:
-        #   for target in local.targets : join("-", ["elb", "ingress", target.protocol, target.port]) => {
-        #     type                     = "ingress"
-        #     from_port                = target.port
-        #     to_port                  = target.port
-        #     protocol                 = local.layer7_to_layer4_mapping[target.protocol]
-        #     description              = "Service ${target.protocol} port ${target.port}"
-        #     source_security_group_id = module.elb.security_group.id
-        #   }
-        # },
         {
           ingress_all = {
             type                     = "ingress"

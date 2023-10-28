@@ -25,14 +25,7 @@ locals {
 module "asg" {
   source = "../asg"
 
-  for_each = {
-    for obj in flatten([for instance_type in try(var.ecs.service.ec2.instance_types, []) : [for capacity in try(var.ecs.service.ec2.capacities, []) : {
-      instance_regex = regex("^(?P<prefix>\\w+)\\.(?P<size_number>\\d*x*)(?P<size_name>\\w+)$", instance_type)
-      instance_type  = instance_type
-      capacity       = capacity
-      }
-    ]]) : lower(join("-", compact([var.name, substr(obj.capacity.type, 0, 2), "${obj.instance_regex.prefix}-${obj.instance_regex.size_number}${substr(obj.instance_regex.size_name, 0, 1)}"]))) => { instance_type = obj.instance_type, capacity = obj.capacity }
-  }
+  for_each = local.asgs
 
   name          = each.key
   instance_type = each.value.instance_type
@@ -55,9 +48,9 @@ module "asg" {
   source_security_group_id = module.elb.security_group.id
 
   vpc           = var.vpc
-  min_count     = var.ecs.service.task.min_size
-  max_count     = var.ecs.service.task.max_size
-  desired_count = var.ecs.service.task.desired_size
+  min_count     = ceil(var.ecs.service.task.min_size / length(local.asgs))
+  max_count     = ceil(var.ecs.service.task.max_size / length(local.asgs))
+  desired_count = ceil(var.ecs.service.task.desired_size / length(local.asgs))
 
   tags = var.tags
 }

@@ -1,11 +1,21 @@
 # AWS microservice terraform module
 
-Terraform module which creates a microservice that works for all EC2 instances. The applications can range from deploying general purpose applications, machine learning training. machine learning inference, high performance computing and more.
+Terraform module which creates a microservice that works for all Fargate/EC2 instances. The applications can range from deploying general purpose applications, machine learning training. machine learning inference, high performance computing and more.
 
-The purpose is to unify under one confguration a general purpose deployment to reduce the technical debt on the infrastructure. It is a simple, safe and scalable way to deploy applications with containers.
-it is also a great alternative to Sagemaker, it will be 40% cheaper but will require some work on the infrastructure for deploying it.
+There are already some terraform microservices available, however they offer low variety in configurations and usually only supports Fargate. Here you have access to all EC2 instances with easy configuration.
 
-The configuration aims to support Kubernetes and have the same modules for other cloud providers.
+## data platforms or frameworks
+
+Data platforms are a great way to simply and efficiently manage your AI lifecycle from training to deployment. However they are quite pricy and only work for data application. Some frameworks like ray.io will offer easily lifecycle management from local machine to complex cloud deployment for ML projects.
+If your application is only oriented towards ML, you should probably use those tools. 
+
+If you want to unify your infrastructure under terraform, use this module.
+Terraform covers a wide range of cloud providers, hence reducing dependability over one provider/platform.
+
+## Specificities
+
+- heterogeneous clusters, consisting of different instance types
+- Parallelizing data processing with autoscaling
 
 The microservice has the following specifications:
 
@@ -24,9 +34,9 @@ The microservice has the following specifications:
           - [x] Compute Optimized
           - [x] Memory Optimized
           - [x] Accelerated Computing (GPU, Inferentia, Trainium)
-          - [ ] Accelerated Computing (Gaudi) config not ok/not tested
-          - [ ] Storage Optimized: config ok/not tested
-          - [ ] HPC Optimized: config ok/not tested
+          - [ ] Accelerated Computing (Gaudi) not supported
+          - [ ] Storage Optimized: supported/not tested
+          - [ ] HPC Optimized: supported/not tested
     - [ ] EKS
         - [ ] Fargate
         - [ ] EC2
@@ -40,7 +50,7 @@ To see which specific instances are supported, please check [instances](). Feel 
 ## Examples
 
 Go check the [examples](https://github.com/vistimi/terraform-aws-microservice/tree/trunk/examples)
-Go check the [tests](https://github.com/vistimi/terraform-aws-microservice/tree/trunk/test/microservice)
+Go check the [tests](https://github.com/vistimi/terraform-aws-microservice/tree/trunk/tests/microservice)
 
 ## ECS vs EKS equivalent
 
@@ -67,6 +77,20 @@ Scaling activity `<id>`: Failed: We currently do not have sufficient `<instance_
 ```
 
 It means that not available instances in the available zones. Unfortunately AWS does not have enough capacity in some regions. A possible solution would be to retry deploying the microservice until it is successful.
+
+## Makefile
+
+If the env variables are not defined:
+```sh
+make aws-auth AWS_ACCESS_KEY=*** AWS_SECRET_KEY=*** AWS_REGION_NAME=***
+make prepare AWS_ACCOUNT_ID=*** AWS_REGION_NAME=***
+```
+
+otherwise:
+```sh
+make aws-auth
+make prepare
+```
 
 ## License
 

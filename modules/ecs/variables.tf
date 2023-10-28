@@ -159,9 +159,4 @@ variable "ecs" {
       }))
     })
   })
-
-  validation {
-    condition     = var.ecs.service.ec2 != null ? length(var.ecs.service.ec2.instance_types) == 1 : true
-    error_message = "ECS EC2 configuration only supports one instance type yet"
-  }
 }

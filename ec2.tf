@@ -31,7 +31,7 @@ locals {
         try(one(instance.gpus).count, null),
         0,
       )
-      architecture = one(instance.supported_architectures)
+      architecture = [for arch in instance.supported_architectures : arch if contains(["x86_64", "arm64"], arch)][0]
     }
   }
 
@@ -78,13 +78,8 @@ resource "null_resource" "instance" {
 
   lifecycle {
     precondition {
-      condition     = contains(["inf", "gpu", "cpu"], each.value.chip_type) ? length(var.orchestrator.group.ec2.instance_types) == 1 : true
-      error_message = "ec2 inf/gpu/cpu instance types must contain only one element, got ${jsonencode(var.orchestrator.group.ec2.instance_types)}"
-    }
-
-    precondition {
-      condition     = var.orchestrator.group.ec2.os == "linux" ? contains(["x86_64", "arm64", "gpu", "inf"], each.value.architecture) : false
-      error_message = "EC2 architecture must for one of linux:[x86_64, arm64, gpu, inf]"
+      condition     = var.orchestrator.group.ec2.os == "linux" ? contains(["x86_64", "arm64"], each.value.architecture) : false
+      error_message = "EC2 architecture must for one of linux:[x86_64, arm64]"
     }
 
     precondition {
