@@ -80,7 +80,17 @@ module "microservice" {
               "-c",
             ]
             command = [
-              "apt update -q > /dev/null 2>&1; apt install apache2 ufw systemctl curl -yq > /dev/null 2>&1; ufw app list; echo -e 'Listen 81' >> /etc/apache2/ports.conf; echo print /etc/apache2/ports.conf.....; cat /etc/apache2/ports.conf; echo -e '<VirtualHost *:81>\nServerAdmin webmaster@localhost\nDocumentRoot /var/www/html\nErrorLog $${APACHE_LOG_DIR}/error.log\nCustomLog $${APACHE_LOG_DIR}/access.log combined\n</VirtualHost>' >> /etc/apache2/sites-enabled/000-default.conf; echo print /etc/apache2/sites-enabled/000-default.conf.....; cat /etc/apache2/sites-enabled/000-default.conf; systemctl start apache2; echo test localhost:: $(curl -s -o /dev/null -w '%%{http_code}' localhost); echo test localhost:81:: $(curl -s -o /dev/null -w '%%{http_code}' localhost:81); sleep infinity",
+              <<EOT
+              apt update -q > /dev/null 2>&1
+              apt install apache2 ufw systemctl curl -yq > /dev/null 2>&1
+              ufw app list
+              echo -e 'Listen 81' >> /etc/apache2/ports.conf; echo print /etc/apache2/ports.conf.....; cat /etc/apache2/ports.conf
+              echo -e '<VirtualHost *:81>\nServerAdmin webmaster@localhost\nDocumentRoot /var/www/html\nErrorLog $${APACHE_LOG_DIR}/error.log\nCustomLog $${APACHE_LOG_DIR}/access.log combined\n</VirtualHost>' >> /etc/apache2/sites-enabled/000-default.conf; echo print /etc/apache2/sites-enabled/000-default.conf.....; cat /etc/apache2/sites-enabled/000-default.conf
+              systemctl start apache2
+              echo test localhost:: $(curl -s -o /dev/null -w '%%{http_code}' localhost)
+              echo test localhost:81:: $(curl -s -o /dev/null -w '%%{http_code}' localhost:81)
+              sleep infinity
+              EOT
             ]
             readonly_root_filesystem = false
           }

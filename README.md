@@ -4,13 +4,116 @@ Terraform module which creates a microservice that works for all Fargate/EC2 ins
 
 There are already some terraform microservices available, however they offer low variety in configurations and usually only supports Fargate. Here you have access to all EC2 instances with easy configuration.
 
+## Usage
+
+```hcl
+module "microservice" {
+  source = "vistimi/microservice/aws"
+
+  name = "microservice-complete"
+
+  bucket_env = {
+    force_destroy = true
+    versioning    = false
+    file_key      = "file_local_name.env"
+    file_path     = "file_in_bucket_name.env"
+  }
+
+  vpc = {
+    id               = "my_vpc_id"
+    subnet_tier_ids  = ["id_subnet_tier_1", "id_subnet_tier_2"]
+    subnet_intra_ids = ["id_subnet_intra_1", "id_subnet_intra_2"]
+  }
+
+  orchestrator = {
+    group = {
+      name = "first"
+      deployment = {
+        min_size     = 1
+        max_size     = 2
+        desired_size = 1
+
+        containers = [
+          {
+            name = "first"
+            docker = {
+              repository = {
+                name = "ubuntu"
+              }
+              image = {
+                tag = "latest"
+              }
+            }
+
+            traffics = [
+              {
+                # this will redirect http:80 to http:80
+                listener = {
+                  # port is by default 80 with http
+                  protocol = "http"
+                }
+                target = {
+                  port              = 80
+                  protocol          = "http" # if not specified, the protocol will be the same as the listener
+                  health_check_path = "/"    # if not specified, the health_check_path will be "/"
+                }
+              }
+            ]
+
+            entrypoint = [
+              "/bin/bash",
+              "-c",
+            ]
+            command = [
+              <<EOT
+              apt update -q > /dev/null 2>&1
+              apt install apache2 ufw systemctl curl -yq > /dev/null 2>&1
+              ufw app list
+              systemctl start apache2
+              echo test localhost:: $(curl -s -o /dev/null -w '%%{http_code}' localhost)
+              sleep infinity
+              EOT
+            ]
+            readonly_root_filesystem = false
+          }
+        ]
+      }
+
+      ec2 = {
+        key_name       = "name_of_key_to_ssh_with"
+        instance_types = ["t2.micro"]
+        os             = "linux"
+        os_version     = "2023"
+        capacities = [
+          # no need to have multiple specified. If only one, only `type` is needed.
+          {
+            type   = "ON_DEMAND"
+            base   = true
+            weight = 60
+          },
+          {
+            type   = "SPOT"
+            weight = 30
+          }
+        ]
+      }
+    }
+    ecs = {
+      # override default ecs behaviour
+    }
+  }
+
+  tags = {}
+}
+```
+
 ## Data platforms or frameworks
-
-Data platforms are a great way to simply and efficiently manage your AI lifecycle from training to deployment. However they are quite pricy and only work for data application. Some frameworks like ray.io or mlflow.org will offer easily lifecycle management from local machine to complex cloud deployment for ML projects.
-:no_good:If your application is only oriented towards ML, you should probably use those tools.
-
 :ok_woman: If you want to unify your infrastructure with terraform, use this module. Terraform covers a wide range of cloud providers, hence reducing dependability over one provider/platform.
 :ok_man:If you want to use other serving systems such as torchserve or TensorFlow Serving, then use this module.
+
+Data platforms are a great way to simply and efficiently manage your AI lifecycle from training to deployment. However they are quite pricy and only work for data application. Some frameworks like ray.io cluster or mlflow.org will offer easily lifecycle management from local machine to complex cloud deployment for ML projects.
+
+:no_good:If your application is only oriented towards ML, check out alternative tools that might be better for your application.
 
 ## Specificities
 
@@ -27,9 +130,9 @@ The microservice has the following specifications:
 - Environement file
 - Cloudwatch logs
 - Container orchestrators
-    - [ ] ECS
+    - ECS
       - [x] Fargate
-      - [ ] EC2
+      - EC2
           - [x] General Purpose
           - [x] Compute Optimized
           - [x] Memory Optimized
@@ -37,11 +140,70 @@ The microservice has the following specifications:
           - [ ] Accelerated Computing (Gaudi) not supported
           - [ ] Storage Optimized: supported/not tested
           - [ ] HPC Optimized: supported/not tested
-    - [ ] EKS
+    - EKS
         - [ ] Fargate
         - [ ] EC2
 
-To see which specific instances are supported, please check [instances](). Feel free to contribute to the project by adding features or isntances
+## Usage
+
+```hcl
+module "microservice" {
+  source  = "vistimi/microservice/aws"
+  version = "0.0.12"
+
+  orchestrator = {
+    group = {
+      name = "g1"
+      deployment = {
+        min_size     = 1
+        max_size     = 1
+        desired_size = 1
+
+        containers = [
+          {
+            name = "c1"
+            docker = {
+              repository = {
+                name = "ubuntu"
+              }
+              image = {
+                tag = "latest"
+              }
+            }
+            traffics = [
+              {
+                listener = {
+                  port     = 80
+                  protocol = "http"
+                }
+                target = {
+                  port = 80
+                }
+              }
+            ]
+            entrypoint = ["/bin/bash", "-c"]
+            command = [
+              <<EOT
+              # run some commands
+              EOT
+            ]
+            readonly_root_filesystem = false
+          }
+        ]
+      }
+      ec2 = {
+        instance_types = ["t3.medium"]
+        os             = "linux"
+        os_version     = "2023"
+        capacities = [{
+          type = "ON_DEMAND"
+        }]
+      }
+    }
+    ecs = {}
+  }
+}
+```
 
 ## Architecture
 
