@@ -13,8 +13,8 @@ module "microservice" {
   name = "microservice-complete"
 
   bucket_env = {
-    force_destroy = true
-    versioning    = false
+    force_destroy = false
+    versioning    = true
     file_key      = "file_local_name.env"
     file_path     = "file_in_bucket_name.env"
   }
