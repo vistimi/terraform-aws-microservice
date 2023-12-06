@@ -109,6 +109,7 @@ module "microservice" {
 
 ## Data platforms or frameworks
 :ok_woman: If you want to unify your infrastructure with terraform, use this module. Terraform covers a wide range of cloud providers, hence reducing dependability over one provider/platform.
+
 :ok_man:If you want to use other serving systems such as torchserve or TensorFlow Serving, then use this module.
 
 Data platforms are a great way to simply and efficiently manage your AI lifecycle from training to deployment. However they are quite pricy and only work for data application. Some frameworks like ray.io cluster or mlflow.org will offer easily lifecycle management from local machine to complex cloud deployment for ML projects.
